@@ -1,4 +1,4 @@
-# Visão do Projeto DataLake
+﻿# Visão do Projeto DataLake
 
 ## 1. Contexto
 
@@ -176,7 +176,7 @@ Exemplos:
 - resultados de serviços externos;
 - metadados de exames;
 - respostas de APIs.
-- APIs REST
+### APIs REST
 
 Futuramente, a plataforma poderá consumir dados disponibilizados por APIs externas.
 
@@ -187,11 +187,15 @@ Exemplos:
 - catálogos públicos;
 - serviços de terminologia;
 - plataformas de pesquisa.
-- Bancos de dados relacionais
+### Bancos de dados relacionais
 
 A plataforma poderá simular a extração de dados de outros bancos de dados, utilizando consultas SQL ou conexões controladas.
 
+### Arquivos de planilha
+
 Arquivos em formato de planilha poderão ser utilizados como fonte de dados, especialmente em cenários nos quais equipes realizam controles manuais.
+
+### Arquivos de texto
 
 Arquivos de texto poderão conter registros simples, logs ou informações geradas por outros sistemas.
 
@@ -226,13 +230,13 @@ Em etapas futuras, poderão ser simulados metadados de arquivos como:
 
 Inicialmente, o foco não será processar diretamente arquivos genômicos de grande volume, mas organizar seus metadados e simular a rastreabilidade de seu processamento.
 
-# 6. Funcionalidades previstas
+## 6. Funcionalidades previstas
 
 As funcionalidades serão desenvolvidas de forma progressiva durante os diferentes MVPs do projeto.
 
 ---
 
-## Infraestrutura e configuração
+### Infraestrutura e configuração
 
 - Execução do PostgreSQL com Docker;
 - Configuração dos serviços com Docker Compose;
@@ -243,7 +247,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 
 ---
 
-## Organização do projeto
+### Organização do projeto
 
 - Estrutura modular do código;
 - Separação de responsabilidades;
@@ -254,7 +258,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 
 ---
 
-## Modelagem de dados
+### Modelagem de dados
 
 - Criação do modelo conceitual;
 - Criação do modelo lógico;
@@ -267,7 +271,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 
 ---
 
-## Versionamento do banco de dados
+### Versionamento do banco de dados
 
 - Criação de migrações;
 - Aplicação automática das alterações;
@@ -277,7 +281,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 
 ---
 
-## Ingestão de dados
+### Ingestão de dados
 
 - Leitura de arquivos CSV;
 - Leitura de arquivos JSON;
@@ -290,7 +294,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 
 ---
 
-## Camada de dados brutos
+### Camada de dados brutos
 
 - Preservação dos arquivos originais;
 - Separação entre dados brutos e dados processados;
@@ -299,7 +303,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 
 ---
 
-## Camada de staging
+### Camada de staging
 
 - Armazenamento temporário dos dados recebidos;
 - Preparação dos registros antes da carga definitiva;
@@ -308,7 +312,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 
 ---
 
-## Transformação de dados
+### Transformação de dados
 
 - Renomeação de colunas;
 - Conversão de tipos;
@@ -321,7 +325,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 
 ---
 
-## Qualidade de dados
+### Qualidade de dados
 
 - Validação de campos obrigatórios;
 - Validação de formatos;
@@ -336,7 +340,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 
 ---
 
-## Tratamento de registros rejeitados
+### Tratamento de registros rejeitados
 
 - Armazenamento dos registros inválidos;
 - Registro do motivo da rejeição;
@@ -346,7 +350,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 
 ---
 
-## Rastreabilidade
+### Rastreabilidade
 
 - Registro da origem de cada dado;
 - Associação entre arquivos e cargas;
@@ -357,7 +361,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 
 ---
 
-## Idempotência
+### Idempotência
 
 - Prevenção de duplicidades durante reprocessamentos;
 - Identificação de arquivos já processados;
@@ -366,7 +370,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 
 ---
 
-## Consultas SQL
+### Consultas SQL
 
 - Consultas sobre pacientes fictícios;
 - Consultas sobre exames;
@@ -378,7 +382,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 
 ---
 
-## API REST
+### API REST
 
 - Endpoint de verificação de funcionamento;
 - Consulta de cargas;
@@ -392,7 +396,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 
 ---
 
-## Logs e observabilidade
+### Logs e observabilidade
 
 - Registro do início e do fim das execuções;
 - Registro de erros;
@@ -403,7 +407,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 
 ---
 
-## Testes
+### Testes
 
 - Testes unitários;
 - Testes de transformação;
@@ -416,7 +420,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 
 ---
 
-## Integração contínua
+### Integração contínua
 
 - Execução automática dos testes;
 - Análise de qualidade do código;
@@ -426,7 +430,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 
 ---
 
-## Documentação
+### Documentação
 
 - README com instruções de execução;
 - Documentação da arquitetura;
@@ -438,6 +442,7 @@ As funcionalidades serão desenvolvidas de forma progressiva durante os diferent
 - Histórico das versões.
 
 ## 7. Escopo do MVP 0.1.0
+
 O **MVP 0.1.0** será dedicado à criação da base estrutural e da infraestrutura inicial do projeto.
 
 Neste primeiro MVP serão entregues:
@@ -468,7 +473,7 @@ Neste primeiro MVP serão entregues:
 
 ---
 
-## Arquitetura do MVP
+### Arquitetura do MVP
 
 ```text
 Projeto Python
@@ -485,7 +490,7 @@ Volume Persistente
 
 ---
 
-## Objetivo do MVP
+### Objetivo do MVP
 
 O principal objetivo desta versão é garantir que qualquer desenvolvedor autorizado consiga:
 
@@ -496,11 +501,11 @@ O principal objetivo desta versão é garantir que qualquer desenvolvedor autori
 
 ---
 
-# 8. Fora do escopo do MVP 0.1.0
+## 8. Fora do escopo do MVP 0.1.0
 
 As seguintes funcionalidades **não serão implementadas** nesta primeira versão:
 
-## Banco de dados
+#### Banco de dados
 
 - Modelagem completa das entidades de saúde;
 - Criação das tabelas do domínio;
@@ -508,7 +513,7 @@ As seguintes funcionalidades **não serão implementadas** nesta primeira versã
 - Cadastro de exames;
 - Armazenamento de resultados laboratoriais.
 
-## ETL e processamento
+### ETL e processamento
 
 - Criação de pipelines ETL;
 - Ingestão de arquivos CSV;
@@ -522,30 +527,30 @@ As seguintes funcionalidades **não serão implementadas** nesta primeira versã
 - Armazenamento de registros rejeitados;
 - Rastreabilidade completa das cargas.
 
-## API
+### API
 
 - Criação de API REST;
 - Uso do FastAPI;
 - Autenticação;
 - Autorização.
 
-## Interface
+### Interface
 
 - Interface gráfica.
 
-## Testes
+### Testes
 
 - Testes de integração;
 - Testes da API;
 - Cobertura de testes.
 
-## DevOps
+### DevOps
 
 - GitHub Actions;
 - Monitoramento;
 - Dashboards.
 
-## Integrações
+### Integrações
 
 - Integração com serviços externos;
 - Processamento de dados genômicos;
@@ -564,7 +569,7 @@ Os requisitos não funcionais definem as características de qualidade, seguran�
 
 ---
 
-## Segurança
+### Segurança
 
 O projeto deverá atender aos seguintes requisitos de segurança:
 
@@ -579,7 +584,7 @@ O projeto deverá atender aos seguintes requisitos de segurança:
 
 ---
 
-## Privacidade
+### Privacidade
 
 O projeto deverá preservar a privacidade dos dados utilizados.
 
@@ -593,7 +598,7 @@ Para isso:
 
 ---
 
-## Rastreabilidade
+### Rastreabilidade
 
 Toda informação processada deverá possuir rastreabilidade.
 
@@ -609,7 +614,7 @@ Assim:
 
 ---
 
-## Reprodutibilidade
+### Reprodutibilidade
 
 O ambiente deverá ser facilmente reproduzido por qualquer desenvolvedor.
 
@@ -624,7 +629,7 @@ Para isso:
 
 ---
 
-## Manutenibilidade
+### Manutenibilidade
 
 A arquitetura deverá facilitar futuras evoluções.
 
@@ -640,7 +645,7 @@ Portanto:
 
 ---
 
-## Testabilidade
+### Testabilidade
 
 As funcionalidades deverão ser desenvolvidas de forma que possam ser testadas facilmente.
 
@@ -654,7 +659,7 @@ Assim:
 
 ---
 
-## Confiabilidade
+### Confiabilidade
 
 O sistema deverá apresentar comportamento previsível mesmo diante de falhas.
 
@@ -669,7 +674,7 @@ Para isso:
 
 ---
 
-## Integridade dos dados
+### Integridade dos dados
 
 O banco deverá preservar a consistência dos dados armazenados.
 
@@ -684,7 +689,7 @@ Assim:
 
 ---
 
-## Desempenho
+### Desempenho
 
 O projeto deverá apresentar desempenho adequado para seu propósito.
 
@@ -698,7 +703,7 @@ Portanto:
 
 ---
 
-## Escalabilidade
+### Escalabilidade
 
 A arquitetura deverá permitir crescimento gradual do projeto.
 
@@ -711,7 +716,7 @@ Assim:
 
 ---
 
-## Documentação
+### Documentação
 
 Toda a documentação deverá permanecer atualizada durante a evolução do projeto.
 
@@ -726,7 +731,7 @@ O projeto deverá possuir:
 
 ---
 
-## Portabilidade
+### Portabilidade
 
 O ambiente deverá funcionar de forma semelhante em diferentes computadores.
 
@@ -738,7 +743,7 @@ Para isso:
 
 ---
 
-## Versionamento
+### Versionamento
 
 O desenvolvimento deverá seguir boas práticas de controle de versão.
 
@@ -753,7 +758,7 @@ Assim:
 
 ---
 
-## Usabilidade para desenvolvedores
+### Usabilidade para desenvolvedores
 
 O projeto deverá ser simples de compreender e configurar.
 
@@ -771,18 +776,18 @@ O desenvolvimento de uma plataforma de dados em saúde envolve riscos técnicos,
 
 ---
 
-## Exposição de dados sensíveis
+### Exposição de dados sensíveis
 
 Dados de saúde podem conter informações pessoais e clínicas sensíveis.
 
-### Impacto
+#### Impacto
 
 - Violação de privacidade;
 - Exposição indevida de pacientes;
 - Comprometimento ético e legal;
 - Perda de confiança no projeto.
 
-### Mitigação
+#### Mitigação
 
 - Utilizar somente dados sintéticos, públicos ou adequadamente anonimizados;
 - Impedir o versionamento de arquivos locais;
@@ -793,18 +798,18 @@ Dados de saúde podem conter informações pessoais e clínicas sensíveis.
 
 ---
 
-## Versionamento acidental de credenciais
+### Versionamento acidental de credenciais
 
 O arquivo `.env`, senhas ou tokens podem ser enviados ao GitHub por engano.
 
-### Impacto
+#### Impacto
 
 - Acesso não autorizado;
 - Comprometimento do banco de dados;
 - Necessidade de revogar credenciais;
 - Exposição de serviços.
 
-### Mitigação
+#### Mitigação
 
 - Incluir o arquivo `.env` no `.gitignore`;
 - Utilizar um arquivo `.env.example`;
@@ -814,18 +819,18 @@ O arquivo `.env`, senhas ou tokens podem ser enviados ao GitHub por engano.
 
 ---
 
-## Dados inválidos
+### Dados inválidos
 
 Arquivos podem conter valores ausentes, formatos incorretos ou informações impossíveis.
 
-### Impacto
+#### Impacto
 
 - Análises incorretas;
 - Falhas durante os pipelines;
 - Armazenamento de dados não confiáveis;
 - Comprometimento das consultas.
 
-### Mitigação
+#### Mitigação
 
 - Aplicar validações estruturais;
 - Validar tipos e formatos;
@@ -835,18 +840,18 @@ Arquivos podem conter valores ausentes, formatos incorretos ou informações imp
 
 ---
 
-## Registros duplicados
+### Registros duplicados
 
 Um mesmo arquivo ou registro pode ser processado mais de uma vez.
 
-### Impacto
+#### Impacto
 
 - Contagens incorretas;
 - Resultados duplicados;
 - Crescimento desnecessário do banco de dados;
 - Análises inconsistentes.
 
-### Mitigação
+#### Mitigação
 
 - Utilizar identificadores únicos;
 - Calcular o hash dos arquivos;
@@ -856,18 +861,18 @@ Um mesmo arquivo ou registro pode ser processado mais de uma vez.
 
 ---
 
-## Perda de rastreabilidade
+### Perda de rastreabilidade
 
 Os registros podem ser armazenados sem informação sobre sua origem.
 
-### Impacto
+#### Impacto
 
 - Dificuldade para investigar erros;
 - Impossibilidade de reproduzir resultados;
 - Perda de confiança nos dados;
 - Dificuldade para corrigir cargas.
 
-### Mitigação
+#### Mitigação
 
 - Registrar cada ingestão;
 - Associar os registros à carga de origem;
@@ -877,18 +882,18 @@ Os registros podem ser armazenados sem informação sobre sua origem.
 
 ---
 
-## Falhas de ingestão
+### Falhas de ingestão
 
 O processamento pode ser interrompido por arquivos corrompidos, indisponibilidade do banco de dados ou erros inesperados.
 
-### Impacto
+#### Impacto
 
 - Carga incompleta;
 - Banco em estado inconsistente;
 - Necessidade de intervenção manual;
 - Perda de dados processados.
 
-### Mitigação
+#### Mitigação
 
 - Utilizar transações;
 - Registrar o status das execuções;
@@ -899,18 +904,18 @@ O processamento pode ser interrompido por arquivos corrompidos, indisponibilidad
 
 ---
 
-## Alterações manuais no banco de dados
+### Alterações manuais no banco de dados
 
 A estrutura do banco pode ser modificada diretamente sem registro no projeto.
 
-### Impacto
+#### Impacto
 
 - Ambientes diferentes;
 - Perda de reprodutibilidade;
 - Dificuldade para identificar alterações;
 - Falhas ao executar o projeto em outra máquina.
 
-### Mitigação
+#### Mitigação
 
 - Utilizar Alembic;
 - Versionar todas as migrações;
@@ -919,18 +924,18 @@ A estrutura do banco pode ser modificada diretamente sem registro no projeto.
 
 ---
 
-## Falta de padronização
+### Falta de padronização
 
 O código pode crescer sem uma separação clara de responsabilidades.
 
-### Impacto
+#### Impacto
 
 - Manutenção difícil;
 - Aumento da quantidade de erros;
 - Duplicação de código;
 - Dificuldade para adicionar novas funcionalidades.
 
-### Mitigação
+#### Mitigação
 
 - Manter uma arquitetura modular;
 - Criar funções pequenas e coesas;
@@ -940,18 +945,18 @@ O código pode crescer sem uma separação clara de responsabilidades.
 
 ---
 
-## Excesso de complexidade
+### Excesso de complexidade
 
 O projeto pode adotar muitas tecnologias antes de existir uma necessidade real.
 
-### Impacto
+#### Impacto
 
 - Dificuldade de aprendizado;
 - Aumento do tempo de desenvolvimento;
 - Arquitetura difícil de compreender;
 - Possível abandono do projeto.
 
-### Mitigação
+#### Mitigação
 
 - Desenvolver por meio de MVPs;
 - Introduzir tecnologias progressivamente;
@@ -961,17 +966,17 @@ O projeto pode adotar muitas tecnologias antes de existir uma necessidade real.
 
 ---
 
-## Dependência excessiva de bibliotecas
+### Dependência excessiva de bibliotecas
 
 O projeto pode depender de abstrações sem compreender os conceitos fundamentais.
 
-### Impacto
+#### Impacto
 
 - Dificuldade para diagnosticar erros;
 - Conhecimento superficial das tecnologias;
 - Uso inadequado das ferramentas.
 
-### Mitigação
+#### Mitigação
 
 - Aprender SQL antes de depender totalmente de um ORM;
 - Compreender os processos executados pelas bibliotecas;
@@ -980,18 +985,18 @@ O projeto pode depender de abstrações sem compreender os conceitos fundamentai
 
 ---
 
-## Falta de testes
+### Falta de testes
 
 Alterações podem quebrar funcionalidades já existentes.
 
-### Impacto
+#### Impacto
 
 - Regressões;
 - Comportamento inesperado;
 - Baixa confiança nas entregas;
 - Dificuldade para realizar refatorações.
 
-### Mitigação
+#### Mitigação
 
 - Adicionar testes progressivamente;
 - Testar regras de negócio;
@@ -1000,18 +1005,18 @@ Alterações podem quebrar funcionalidades já existentes.
 
 ---
 
-## Documentação desatualizada
+### Documentação desatualizada
 
 O código pode evoluir sem que as instruções sejam atualizadas.
 
-### Impacto
+#### Impacto
 
 - Dificuldade para executar o projeto;
 - Entrada mais lenta de novos colaboradores;
 - Utilização de comandos incorretos;
 - Perda de credibilidade do portfólio.
 
-### Mitigação
+#### Mitigação
 
 - Atualizar a documentação a cada MVP;
 - Incluir documentação na definição de pronto;
@@ -1020,17 +1025,17 @@ O código pode evoluir sem que as instruções sejam atualizadas.
 
 ---
 
-## Dependência do ambiente local
+### Dependência do ambiente local
 
 O projeto pode funcionar apenas na máquina da desenvolvedora.
 
-### Impacto
+#### Impacto
 
 - Impossibilidade de avaliação por terceiros;
 - Dificuldades de colaboração;
 - Falhas em outros sistemas operacionais.
 
-### Mitigação
+#### Mitigação
 
 - Utilizar Docker;
 - Declarar todas as dependências do projeto;
@@ -1039,11 +1044,12 @@ O projeto pode funcionar apenas na máquina da desenvolvedora.
 - Validar o projeto em um ambiente limpo.
 
 ## 11. Critérios de sucesso
+
 O projeto será considerado bem-sucedido quando demonstrar, de forma prática e documentada, a capacidade de receber, validar, transformar, armazenar e disponibilizar dados de saúde de maneira segura, organizada e rastreável.
 
 ---
 
-## Critérios de sucesso do projeto completo
+### Critérios de sucesso do projeto completo
 
 Ao final do desenvolvimento, uma pessoa autorizada deverá ser capaz de:
 
@@ -1062,7 +1068,7 @@ Ao final do desenvolvimento, uma pessoa autorizada deverá ser capaz de:
 
 ---
 
-## Funcionalidades esperadas da plataforma
+### Funcionalidades esperadas da plataforma
 
 Ao término do projeto, a plataforma deverá ser capaz de:
 
@@ -1084,7 +1090,7 @@ Ao término do projeto, a plataforma deverá ser capaz de:
 
 ---
 
-## Critérios de qualidade
+### Critérios de qualidade
 
 O projeto deverá apresentar os seguintes indicadores de qualidade:
 
@@ -1104,7 +1110,7 @@ O projeto deverá apresentar os seguintes indicadores de qualidade:
 
 ---
 
-## Critérios de sucesso do portfólio
+### Critérios de sucesso do portfólio
 
 O repositório deverá permitir que professores, avaliadores e recrutadores compreendam facilmente:
 
@@ -1120,23 +1126,23 @@ O repositório deverá permitir que professores, avaliadores e recrutadores comp
 
 ---
 
-## Conhecimentos demonstrados
+### Conhecimentos demonstrados
 
 A apresentação do projeto deverá evidenciar domínio dos seguintes assuntos:
 
-### Banco de dados
+#### Banco de dados
 
 - PostgreSQL;
 - SQL;
 - Modelagem de banco de dados.
 
-### Engenharia de dados
+#### Engenharia de dados
 
 - Pipelines ETL;
 - Qualidade de dados;
 - Transformação de dados.
 
-### Desenvolvimento
+#### Desenvolvimento
 
 - Python;
 - Pandas;
@@ -1145,14 +1151,14 @@ A apresentação do projeto deverá evidenciar domínio dos seguintes assuntos:
 - FastAPI;
 - Pytest.
 
-### Infraestrutura
+#### Infraestrutura
 
 - Docker;
 - Git;
 - GitHub;
 - GitHub Actions.
 
-### Engenharia de Software
+#### Engenharia de Software
 
 - Arquitetura de software;
 - Segurança de dados;
@@ -1160,7 +1166,7 @@ A apresentação do projeto deverá evidenciar domínio dos seguintes assuntos:
 
 ---
 
-## Critérios de sucesso do MVP 0.1.0
+### Critérios de sucesso do MVP 0.1.0
 
 O primeiro MVP será considerado concluído quando:
 
@@ -1185,7 +1191,7 @@ O primeiro MVP será considerado concluído quando:
 
 ---
 
-## Indicadores futuros
+### Indicadores futuros
 
 Durante a evolução do projeto poderão ser monitorados diversos indicadores de desempenho e qualidade, tais como:
 
@@ -1205,7 +1211,7 @@ Durante a evolução do projeto poderão ser monitorados diversos indicadores de
 
 ---
 
-## Considerações finais
+### Considerações finais
 
 O projeto não será considerado bem-sucedido apenas por utilizar diversas tecnologias.
 
