@@ -4,7 +4,7 @@
 
 O DataLake é uma plataforma educacional de engenharia de dados em saúde. O projeto simula, em menor escala, os desafios encontrados na integração de informações produzidas por laboratórios, clínicas, hospitais, instituições de pesquisa e outros sistemas de saúde.
 
-Nesta primeira versão, o foco está na criação de uma base de desenvolvimento profissional, organizada e reproduzível. O MVP 0.1.0 entrega um projeto Python instalável e um banco de dados PostgreSQL executado com Docker Compose.
+No MVP 0.2.0, o foco está na modelagem inicial do domínio e no versionamento da estrutura do banco. O projeto utiliza modelos SQLAlchemy e migrações Alembic para criar e evoluir o PostgreSQL de forma reproduzível.
 
 > O projeto utiliza somente dados sintéticos, fictícios, públicos ou adequadamente anonimizados. Dados clínicos reais e informações pessoais não devem ser adicionados ao repositório.
 
@@ -18,33 +18,34 @@ Sem um fluxo padronizado e rastreável, podem surgir registros duplicados, valor
 
 O objetivo do projeto é desenvolver progressivamente uma plataforma capaz de receber, validar, transformar, armazenar e disponibilizar dados de saúde de maneira segura, organizada e rastreável.
 
-No MVP 0.1.0, o objetivo específico é garantir que outra pessoa autorizada consiga clonar o repositório, configurar o ambiente local, instalar o pacote Python, iniciar o PostgreSQL, verificar a saúde do serviço e conectar-se ao banco.
+No MVP 0.2.0, o objetivo específico é representar o domínio inicial de dados laboratoriais, separar os dados entre os schemas `ingestion` e `core` e criar toda a estrutura do banco por migrações reversíveis.
 
 A visão completa do produto está documentada em [`docs/project-vision.md`](docs/project-vision.md).
 
 ## Arquitetura atual
 
 ```text
-┌───────────────────────────┐
-│     Projeto DataLake      │
-└─────────────┬─────────────┘
-              │
-              ▼
-┌───────────────────────────┐
-│      Docker Compose       │
-└─────────────┬─────────────┘
-              │
-              ▼
-┌───────────────────────────┐
-│        PostgreSQL         │
-│ Banco: datalake           │
-└─────────────┬─────────────┘
-              │
-              ▼
-┌───────────────────────────┐
-│    Volume persistente     │
-└───────────────────────────┘
+Projeto DataLake
+       │
+       ├── Configurações
+       ├── Modelos SQLAlchemy
+       └── Migrações Alembic
+                │
+                ▼
+           PostgreSQL
+                │
+       ┌────────┴────────┐
+       ▼                 ▼
+   ingestion            core
+       │                 │
+ data_sources       patients
+                    exam_types
+                    biological_samples
+                    laboratory_exams
+                    exam_results
 ```
+
+As configurações são carregadas do arquivo `.env`. O SQLAlchemy representa as tabelas e suas regras de integridade, enquanto o Alembic cria e versiona a estrutura do banco. O schema `ingestion` registra a origem dos dados e o schema `core` concentra os dados tratados do domínio.
 
 O Docker Compose declara o serviço PostgreSQL e torna a infraestrutura reproduzível. O health check utiliza `pg_isready` para confirmar que o banco está aceitando conexões, enquanto o volume nomeado preserva os dados quando o contêiner é recriado.
 
@@ -54,6 +55,11 @@ O Docker Compose declara o serviço PostgreSQL e torna a infraestrutura reproduz
 - PostgreSQL 17;
 - Docker Desktop;
 - Docker Compose;
+- SQLAlchemy 2;
+- Psycopg 3;
+- Pydantic Settings;
+- Alembic;
+- Pytest;
 - Git.
 
 ## Pré-requisitos
@@ -97,7 +103,7 @@ Abra o `.env` e substitua o valor de `POSTGRES_PASSWORD` por uma senha local seg
 ### 3. Criar o ambiente virtual
 
 ```powershell
-py -3.12 -m venv .venv
+python -m venv .venv
 ```
 
 Ative o ambiente no PowerShell:
@@ -117,7 +123,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
 
 ```powershell
 python -m pip install --upgrade pip
-python -m pip install -e .
+python -m pip install -e ".[dev]"
 ```
 
 Valide a instalação:
@@ -140,7 +146,15 @@ Em seguida, inicie o PostgreSQL em segundo plano:
 docker compose up -d
 ```
 
-### 6. Verificar o serviço
+### 6. Aplicar as migrações
+
+Crie os schemas e as tabelas na versão mais recente:
+
+```powershell
+python -m alembic upgrade head
+```
+
+### 7. Verificar o serviço
 
 ```powershell
 docker compose ps
@@ -154,7 +168,13 @@ Para consultar os logs:
 docker compose logs postgres
 ```
 
-### 7. Conectar-se ao banco
+### 8. Executar os testes
+
+```powershell
+python -m pytest
+```
+
+### 9. Conectar-se ao banco
 
 ```powershell
 docker compose exec postgres psql -U datalake_user -d datalake
@@ -212,12 +232,44 @@ Validar a conexão por meio de um único comando:
 docker compose exec postgres psql -U datalake_user -d datalake -c "SELECT current_database(), current_user;"
 ```
 
+### Migrações do banco
+
+Aplicar todas as migrações:
+
+```powershell
+python -m alembic upgrade head
+```
+
+Verificar a migração atual:
+
+```powershell
+python -m alembic current
+```
+
+Consultar o histórico:
+
+```powershell
+python -m alembic history
+```
+
+Reverter a migração mais recente:
+
+```powershell
+python -m alembic downgrade -1
+```
+
 > Não execute `docker compose down -v` sem compreender o impacto. A opção `-v` remove o volume e apaga os dados armazenados no PostgreSQL.
 
 ## Estrutura de diretórios
 
 ```text
 DataLake/
+├── alembic/
+│   ├── versions/
+│   │   └── *_create_initial_database_schema.py
+│   ├── README
+│   ├── env.py
+│   └── script.py.mako
 ├── data/
 │   ├── processed/
 │   │   └── .gitkeep
@@ -226,15 +278,38 @@ DataLake/
 │   └── rejected/
 │       └── .gitkeep
 ├── docs/
+│   ├── database-model.md
 │   └── project-vision.md
 ├── src/
 │   └── datalake/
+│       ├── config/
+│       │   ├── __init__.py
+│       │   └── settings.py
+│       ├── database/
+│       │   ├── __init__.py
+│       │   ├── base.py
+│       │   ├── engine.py
+│       │   ├── health.py
+│       │   └── session.py
+│       ├── models/
+│       │   ├── __init__.py
+│       │   ├── biological_sample.py
+│       │   ├── data_source.py
+│       │   ├── exam_result.py
+│       │   ├── exam_type.py
+│       │   ├── laboratory_exam.py
+│       │   └── patient.py
 │       └── __init__.py
 ├── tests/
-│   └── .gitkeep
+│   ├── integration/
+│   │   └── test_database_connection.py
+│   └── unit/
+│       ├── test_models.py
+│       └── test_settings.py
 ├── .editorconfig
 ├── .env.example
 ├── .gitignore
+├── alembic.ini
 ├── compose.yaml
 ├── pyproject.toml
 └── README.md
@@ -244,8 +319,11 @@ DataLake/
 - `data/processed`: dados processados e aceitos;
 - `data/rejected`: dados rejeitados durante validações futuras;
 - `docs`: documentação do produto e da arquitetura;
-- `src/datalake`: código-fonte do pacote Python;
-- `tests`: testes automatizados que serão adicionados progressivamente.
+- `src/datalake/config`: carregamento e validação das configurações;
+- `src/datalake/database`: base declarativa, conexão e sessões do banco;
+- `src/datalake/models`: modelos SQLAlchemy do domínio;
+- `alembic`: configuração e versões das migrações;
+- `tests`: testes unitários e de integração.
 
 Os diretórios de dados mantêm somente arquivos `.gitkeep` no Git. Seu conteúdo local é ignorado para reduzir o risco de exposição acidental de dados sensíveis.
 
@@ -274,6 +352,8 @@ Os diretórios de dados mantêm somente arquivos `.gitkeep` no Git. Seu conteúd
 
 ## Status do projeto
 
-**MVP 0.1.0 — Infraestrutura inicial em desenvolvimento.**
+**MVP 0.2.0 — Modelagem inicial e migrações concluídas.**
 
-A estrutura Python e a infraestrutura local do PostgreSQL estão funcionais. O banco inicia com Docker Compose, apresenta estado `healthy`, aceita consultas SQL e utiliza um volume persistente. A entrega será concluída após revisão, Pull Request, integração na branch `main`, criação da tag `v0.1.0` e publicação da release correspondente.
+O banco possui schemas separados para ingestão e dados tratados,
+modelos SQLAlchemy, constraints de integridade e migrações Alembic
+reversíveis.
