@@ -1,0 +1,6 @@
+external_code,birth_date,biological_sex
+PAT-CSV-0001,1995-04-10,female
+PAT-CSV-0002,1988-11-23,male
+PAT-CSV-0003,2001-02-15,not_informed
+PAT-CSV-0004,,unknown
+PAT-CSV-0005,1976-08-30,
