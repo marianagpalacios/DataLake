@@ -4,7 +4,10 @@
 
 O DataLake é uma plataforma educacional de engenharia de dados em saúde. O projeto simula, em menor escala, os desafios encontrados na integração de informações produzidas por laboratórios, clínicas, hospitais, instituições de pesquisa e outros sistemas de saúde.
 
-No MVP 0.2.0, o foco está na modelagem inicial do domínio e no versionamento da estrutura do banco. O projeto utiliza modelos SQLAlchemy e migrações Alembic para criar e evoluir o PostgreSQL de forma reproduzível.
+No MVP 0.3.0, o foco está na primeira ingestão de dados externos. O
+projeto lê um arquivo CSV de pacientes sintéticos com Pandas, valida e
+normaliza seus registros e insere no PostgreSQL somente os pacientes que ainda
+não existem.
 
 > O projeto utiliza somente dados sintéticos, fictícios, públicos ou adequadamente anonimizados. Dados clínicos reais e informações pessoais não devem ser adicionados ao repositório.
 
@@ -18,34 +21,52 @@ Sem um fluxo padronizado e rastreável, podem surgir registros duplicados, valor
 
 O objetivo do projeto é desenvolver progressivamente uma plataforma capaz de receber, validar, transformar, armazenar e disponibilizar dados de saúde de maneira segura, organizada e rastreável.
 
-No MVP 0.2.0, o objetivo específico é representar o domínio inicial de dados laboratoriais, separar os dados entre os schemas `ingestion` e `core` e criar toda a estrutura do banco por migrações reversíveis.
+No MVP 0.3.0, o objetivo específico é implementar um fluxo transacional e
+idempotente de ingestão de pacientes, mantendo separadas as responsabilidades
+de leitura, validação, mapeamento, persistência e apresentação do resultado.
 
 A visão completa do produto está documentada em [`docs/project-vision.md`](docs/project-vision.md).
 
 ## Arquitetura atual
 
 ```text
-Projeto DataLake
-       │
-       ├── Configurações
-       ├── Modelos SQLAlchemy
-       └── Migrações Alembic
-                │
-                ▼
-           PostgreSQL
-                │
-       ┌────────┴────────┐
-       ▼                 ▼
-   ingestion            core
-       │                 │
- data_sources       patients
-                    exam_types
-                    biological_samples
-                    laboratory_exams
-                    exam_results
+Arquivo CSV
+    |
+    v
+Leitor CSV + Pandas
+    |
+    v
+Validação e normalização
+    |
+    v
+Mapper para Patient
+    |
+    v
+Serviço de ingestão
+    |
+    v
+SQLAlchemy
+    |
+    v
+PostgreSQL
+    |
+    ├── ingestion.data_sources
+    └── core
+        ├── patients
+        ├── exam_types
+        ├── biological_samples
+        ├── laboratory_exams
+        └── exam_results
 ```
 
-As configurações são carregadas do arquivo `.env`. O SQLAlchemy representa as tabelas e suas regras de integridade, enquanto o Alembic cria e versiona a estrutura do banco. O schema `ingestion` registra a origem dos dados e o schema `core` concentra os dados tratados do domínio.
+As configurações são carregadas do arquivo `.env`. O leitor transforma o CSV
+em um `DataFrame` do Pandas, o validador aplica o contrato de entrada e o mapper
+converte os registros normalizados em objetos `Patient`. O serviço consulta os
+códigos externos já armazenados, insere somente os pacientes novos e controla
+a transação por meio do SQLAlchemy.
+
+O Alembic cria e versiona a estrutura do banco. O schema `ingestion` registra
+a origem dos dados e o schema `core` concentra os dados tratados do domínio.
 
 O Docker Compose declara o serviço PostgreSQL e torna a infraestrutura reproduzível. O health check utiliza `pg_isready` para confirmar que o banco está aceitando conexões, enquanto o volume nomeado preserva os dados quando o contêiner é recriado.
 
@@ -55,6 +76,7 @@ O Docker Compose declara o serviço PostgreSQL e torna a infraestrutura reproduz
 - PostgreSQL 17;
 - Docker Desktop;
 - Docker Compose;
+- Pandas 3;
 - SQLAlchemy 2;
 - Psycopg 3;
 - Pydantic Settings;
@@ -168,13 +190,30 @@ Para consultar os logs:
 docker compose logs postgres
 ```
 
-### 8. Executar os testes
+### 8. Executar a ingestão
+
+Importe o arquivo sintético incluído no projeto:
+
+```powershell
+python -m datalake.ingestion.cli data/examples/patients.csv
+```
+
+O comando valida o arquivo e apresenta as quantidades de registros recebidos,
+inseridos e já existentes.
+
+### 9. Executar os testes
 
 ```powershell
 python -m pytest
 ```
 
-### 9. Conectar-se ao banco
+Para executar somente os testes unitários:
+
+```powershell
+python -m pytest -m "not integration"
+```
+
+### 10. Conectar-se ao banco
 
 ```powershell
 docker compose exec postgres psql -U datalake_user -d datalake
@@ -271,6 +310,8 @@ DataLake/
 │   ├── env.py
 │   └── script.py.mako
 ├── data/
+│   ├── examples/
+│   │   └── patients.csv
 │   ├── processed/
 │   │   └── .gitkeep
 │   ├── raw/
@@ -279,6 +320,7 @@ DataLake/
 │       └── .gitkeep
 ├── docs/
 │   ├── database-model.md
+│   ├── patient-csv-ingestion.md
 │   └── project-vision.md
 ├── src/
 │   └── datalake/
@@ -291,6 +333,17 @@ DataLake/
 │       │   ├── engine.py
 │       │   ├── health.py
 │       │   └── session.py
+│       ├── ingestion/
+│       │   ├── mappers/
+│       │   │   └── patient_mapper.py
+│       │   ├── readers/
+│       │   │   └── csv_reader.py
+│       │   ├── services/
+│       │   │   └── patient_ingestion_service.py
+│       │   ├── validators/
+│       │   │   └── patient_validator.py
+│       │   ├── cli.py
+│       │   └── exceptions.py
 │       ├── models/
 │       │   ├── __init__.py
 │       │   ├── biological_sample.py
@@ -302,8 +355,13 @@ DataLake/
 │       └── __init__.py
 ├── tests/
 │   ├── integration/
-│   │   └── test_database_connection.py
+│   │   ├── test_database_connection.py
+│   │   └── test_patient_ingestion.py
 │   └── unit/
+│       ├── ingestion/
+│       │   ├── test_csv_reader.py
+│       │   ├── test_patient_mapper.py
+│       │   └── test_patient_validator.py
 │       ├── test_models.py
 │       └── test_settings.py
 ├── .editorconfig
@@ -315,31 +373,33 @@ DataLake/
 └── README.md
 ```
 
+- `data/examples`: arquivos sintéticos seguros para demonstração;
 - `data/raw`: dados recebidos sem transformação;
 - `data/processed`: dados processados e aceitos;
 - `data/rejected`: dados rejeitados durante validações futuras;
 - `docs`: documentação do produto e da arquitetura;
 - `src/datalake/config`: carregamento e validação das configurações;
 - `src/datalake/database`: base declarativa, conexão e sessões do banco;
+- `src/datalake/ingestion`: leitura, validação, mapeamento, serviço e CLI;
 - `src/datalake/models`: modelos SQLAlchemy do domínio;
 - `alembic`: configuração e versões das migrações;
 - `tests`: testes unitários e de integração.
 
-Os diretórios de dados mantêm somente arquivos `.gitkeep` no Git. Seu conteúdo local é ignorado para reduzir o risco de exposição acidental de dados sensíveis.
+Os diretórios `raw`, `processed` e `rejected` mantêm somente arquivos
+`.gitkeep` no Git. Seu conteúdo local é ignorado para reduzir o risco de
+exposição acidental de dados sensíveis. Apenas arquivos sintéticos preparados
+para demonstração podem ser versionados em `data/examples`.
 
 ## Roadmap
 
-- [x] MVP 0.1.0 — estrutura inicial do projeto Python;
-- [x] MVP 0.1.0 — PostgreSQL com Docker Compose;
-- [x] MVP 0.1.0 — volume persistente e health check;
-- [x] MVP 0.1.0 — configuração por variáveis de ambiente;
-- [ ] MVP 0.2.0 — modelagem inicial do domínio;
-- [ ] MVP 0.2.0 — SQLAlchemy e migrações com Alembic;
-- [ ] Ingestão e validação de arquivos;
-- [ ] Pipeline ETL;
-- [ ] API REST;
-- [ ] Testes automatizados e integração contínua;
-- [ ] Indicadores e visualizações.
+- [x] MVP 0.1.0 — infraestrutura, Docker e PostgreSQL;
+- [x] MVP 0.2.0 — modelagem, SQLAlchemy e Alembic;
+- [ ] MVP 0.3.0 — primeira ingestão de pacientes por CSV;
+- [ ] MVP 0.4.0 — validação e qualidade dos dados;
+- [ ] MVP 0.5.0 — pipeline ETL, staging e rastreabilidade;
+- [ ] MVP 0.6.0 — API REST com FastAPI;
+- [ ] MVP 0.7.0 — testes completos e banco de testes;
+- [ ] MVP 0.8.0 — GitHub Actions e preparação do portfólio.
 
 ## Segurança e dados
 
@@ -350,10 +410,99 @@ Os diretórios de dados mantêm somente arquivos `.gitkeep` no Git. Seu conteúd
 - A saída completa de `docker compose config` pode revelar os valores do `.env`; não a publique.
 - Antes de cada commit, utilize `git status` e revise o conteúdo preparado com `git diff --cached`.
 
+## Ingestão de pacientes por CSV
+
+O MVP 0.3.0 adiciona o primeiro fluxo de ingestão do DataLake.
+
+O sistema lê um arquivo CSV de pacientes sintéticos, valida sua estrutura,
+normaliza valores e insere apenas os registros ainda inexistentes em
+`core.patients`.
+
+### Formato esperado
+
+```csv
+external_code,birth_date,biological_sex
+PAT-CSV-0001,1995-04-10,female
+PAT-CSV-0002,1988-11-23,male
+PAT-CSV-0003,2001-02-15,not_informed
+PAT-CSV-0004,,unknown
+PAT-CSV-0005,1976-08-30,
+```
+
+As três colunas devem existir. `external_code` é obrigatório em todas as
+linhas; `birth_date` e `biological_sex` podem estar vazios.
+
+Os valores permitidos para `biological_sex` são `female`, `male`, `intersex`,
+`unknown`, `not_informed` ou vazio. Datas preenchidas devem usar o formato
+`AAAA-MM-DD`.
+
+### Executar a ingestão
+
+Com o ambiente virtual ativado, o PostgreSQL saudável e as migrações aplicadas:
+
+```powershell
+docker compose up -d
+python -m alembic upgrade head
+python -m datalake.ingestion.cli data/examples/patients.csv
+```
+
+Exemplo de saída na primeira execução:
+
+```text
+Ingestão concluída.
+
+Registros recebidos: 5
+Registros inseridos: 5
+Registros já existentes: 0
+Avisos: 0
+```
+
+### Idempotência
+
+A ingestão pode ser repetida sem duplicar pacientes. O serviço consulta
+`external_code` antes da inserção, e a constraint única do PostgreSQL permanece
+como proteção final.
+
+Na segunda execução do mesmo arquivo, os cinco registros são contabilizados
+como existentes e nenhum novo paciente é inserido.
+
+### Consultar os pacientes
+
+```powershell
+docker compose exec postgres psql -U datalake_user -d datalake -c "SELECT external_code, birth_date, biological_sex FROM core.patients ORDER BY external_code;"
+```
+
+### Validações e erros
+
+A ingestão é interrompida quando houver:
+
+- arquivo inexistente, vazio ou malformado;
+- colunas obrigatórias ausentes;
+- arquivo sem registros;
+- código externo vazio ou duplicado dentro do arquivo;
+- data fora do formato esperado;
+- valor inválido para `biological_sex`.
+
+Falhas durante a persistência provocam rollback da transação. A CLI apresenta
+mensagens compreensíveis e encerra com um código diferente de zero quando
+ocorre um erro.
+
+### Limitações atuais
+
+- um erro em qualquer linha rejeita o arquivo inteiro;
+- apenas pacientes em CSV são suportados;
+- pacientes existentes não são atualizados;
+- não existe staging, tabela de cargas ou hash do arquivo;
+- registros rejeitados ainda não são armazenados;
+- não existe API REST.
+
+O contrato completo está documentado em
+[`docs/patient-csv-ingestion.md`](docs/patient-csv-ingestion.md).
+
 ## Status do projeto
 
-**MVP 0.2.0 — Modelagem inicial e migrações concluídas.**
+**MVP 0.3.0 — Primeira ingestão de pacientes por CSV em desenvolvimento.**
 
-O banco possui schemas separados para ingestão e dados tratados,
-modelos SQLAlchemy, constraints de integridade e migrações Alembic
-reversíveis.
+O fluxo principal, a interface de linha de comando e os testes iniciais estão
+implementados. A versão será marcada como concluída após a revisão técnica
+final do MVP.
