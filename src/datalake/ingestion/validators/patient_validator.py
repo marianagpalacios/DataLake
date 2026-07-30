@@ -198,10 +198,14 @@ def validate_patient_dataframe(
         )
     ]
 
-    normalized["biological_sex"] = [
-        value if value else None
-        for value in normalized_sex.tolist()
-    ]
+    normalized["biological_sex"] = pd.Series(
+        [
+            value if value else None
+            for value in normalized_sex.tolist()
+        ],
+        index=normalized.index,
+        dtype=object,
+    )
 
     return PatientValidationResult(
         dataframe=normalized.reset_index(drop=True),
