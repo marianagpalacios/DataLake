@@ -394,7 +394,7 @@ para demonstração podem ser versionados em `data/examples`.
 
 - [x] MVP 0.1.0 — infraestrutura, Docker e PostgreSQL;
 - [x] MVP 0.2.0 — modelagem, SQLAlchemy e Alembic;
-- [ ] MVP 0.3.0 — primeira ingestão de pacientes por CSV;
+- [x] MVP 0.3.0 — primeira ingestão de pacientes por CSV;
 - [ ] MVP 0.4.0 — validação e qualidade dos dados;
 - [ ] MVP 0.5.0 — pipeline ETL, staging e rastreabilidade;
 - [ ] MVP 0.6.0 — API REST com FastAPI;
@@ -501,8 +501,15 @@ O contrato completo está documentado em
 
 ## Status do projeto
 
-**MVP 0.3.0 — Primeira ingestão de pacientes por CSV em desenvolvimento.**
+**MVP 0.3.0 — Primeira ingestão de pacientes por CSV concluída.**
 
-O fluxo principal, a interface de linha de comando e os testes iniciais estão
-implementados. A versão será marcada como concluída após a revisão técnica
-final do MVP.
+A plataforma lê arquivos CSV de pacientes sintéticos, valida e normaliza os
+registros, insere somente pacientes ainda inexistentes e mantém a operação
+idempotente por meio do código externo.
+
+A versão possui interface de linha de comando, persistência transacional,
+17 testes automatizados, migração aplicada e documentação do contrato de
+entrada.
+
+**Próximo MVP:** `v0.4.0` — validação linha a linha, qualidade dos dados,
+registros rejeitados e métricas de ingestão.
