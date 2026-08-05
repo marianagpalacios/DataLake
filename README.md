@@ -395,7 +395,7 @@ para demonstração podem ser versionados em `data/examples`.
 - [x] MVP 0.1.0 — infraestrutura, Docker e PostgreSQL;
 - [x] MVP 0.2.0 — modelagem, SQLAlchemy e Alembic;
 - [x] MVP 0.3.0 — primeira ingestão de pacientes por CSV;
-- [ ] MVP 0.4.0 — validação e qualidade dos dados;
+- [x] MVP 0.4.0 — validação e qualidade dos dados;
 - [ ] MVP 0.5.0 — pipeline ETL, staging e rastreabilidade;
 - [ ] MVP 0.6.0 — API REST com FastAPI;
 - [ ] MVP 0.7.0 — testes completos e banco de testes;
@@ -489,27 +489,55 @@ ocorre um erro.
 
 ### Limitações atuais
 
-- um erro em qualquer linha rejeita o arquivo inteiro;
+- linhas inválidas são rejeitadas sem interromper o processamento das válidas;
 - apenas pacientes em CSV são suportados;
 - pacientes existentes não são atualizados;
 - não existe staging, tabela de cargas ou hash do arquivo;
-- registros rejeitados ainda não são armazenados;
+- registros rejeitados são armazenados somente em relatórios CSV locais;
 - não existe API REST.
 
 O contrato completo está documentado em
 [`docs/patient-csv-ingestion.md`](docs/patient-csv-ingestion.md).
 
+## Qualidade dos dados
+
+O MVP 0.4.0 valida os pacientes individualmente.
+
+Registros válidos continuam no pipeline, enquanto registros inválidos são
+gravados em um relatório local na pasta `data/rejected`.
+
+### Executar o exemplo
+
+```powershell
+python -m datalake.ingestion.cli data/examples/patients_with_quality_issues.csv
+```
+
+### Métricas
+
+A execução apresenta:
+
+- recebidos;
+- válidos;
+- rejeitados;
+- inseridos;
+- existentes;
+- taxa de aceitação;
+- avisos.
+
+### Relatório
+
+O relatório contém os dados originais, a linha do CSV, os códigos e as
+mensagens dos problemas.
+
+Os arquivos da pasta `data/rejected` não são versionados.
+
 ## Status do projeto
 
-**MVP 0.3.0 — Primeira ingestão de pacientes por CSV concluída.**
+**MVP 0.4.0 — Validação e qualidade dos dados concluída.**
 
-A plataforma lê arquivos CSV de pacientes sintéticos, valida e normaliza os
-registros, insere somente pacientes ainda inexistentes e mantém a operação
-idempotente por meio do código externo.
+A plataforma separa registros válidos e inválidos, mantém o processamento dos
+dados aceitos, gera relatórios locais de rejeição e apresenta métricas de
+qualidade da ingestão.
 
-A versão possui interface de linha de comando, persistência transacional,
-17 testes automatizados, migração aplicada e documentação do contrato de
-entrada.
-
-**Próximo MVP:** `v0.4.0` — validação linha a linha, qualidade dos dados,
-registros rejeitados e métricas de ingestão.
+**Próximo MVP:** `v0.5.0` — pipeline ETL, staging, histórico de cargas e
+rastreabilidade.
