@@ -7,8 +7,11 @@ from datalake.ingestion.exceptions import (
     PatientIngestionError,
     PatientValidationError,
 )
-from datalake.ingestion.services import (
-    ingest_patients_csv,
+from datalake.pipeline import run_patient_etl
+from datalake.pipeline.exceptions import (
+    PatientETLError,
+    PipelineArtifactError,
+    SourceFileError,
 )
 from datalake.quality.exceptions import (
     QualityReportError,
@@ -37,12 +40,38 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        "--source-name",
+        default="patient_csv_cli",
+        help="Nome lógico da fonte de dados.",
+    )
+
+    parser.add_argument(
+        "--raw-dir",
+        type=Path,
+        default=Path("data/raw"),
+        help="Pasta da camada raw.",
+    )
+
+    parser.add_argument(
+        "--processed-dir",
+        type=Path,
+        default=Path("data/processed"),
+        help="Pasta dos dados processados.",
+    )
+
+    parser.add_argument(
         "--rejected-dir",
         type=Path,
         default=Path("data/rejected"),
+        help="Pasta dos relatórios de rejeição.",
+    )
+
+    parser.add_argument(
+        "--force",
+        action="store_true",
         help=(
-            "Pasta local para o relatório "
-            "de registros rejeitados."
+            "Reprocessa o arquivo mesmo quando seu "
+            "hash já tiver sido concluído."
         ),
     )
 
@@ -54,11 +83,13 @@ def main() -> None:
     arguments = parser.parse_args()
 
     try:
-        result = ingest_patients_csv(
-            arguments.file_path,
-            rejection_output_dir=(
-                arguments.rejected_dir
-            ),
+        result = run_patient_etl(
+            file_path=arguments.file_path,
+            source_name=arguments.source_name,
+            raw_dir=arguments.raw_dir,
+            processed_dir=arguments.processed_dir,
+            rejected_dir=arguments.rejected_dir,
+            force=arguments.force,
         )
 
     except (
@@ -66,6 +97,9 @@ def main() -> None:
         PatientValidationError,
         PatientIngestionError,
         QualityReportError,
+        SourceFileError,
+        PipelineArtifactError,
+        PatientETLError,
     ) as error:
         print(
             f"Erro durante a ingestão:\n"
@@ -78,8 +112,29 @@ def main() -> None:
     print("Ingestão concluída.")
     print()
 
+    print(f"Execução: {result.run_uuid}")
     print(f"Status: {result.status}")
     print(f"Arquivo: {result.source_file}")
+    print(f"SHA-256: {result.source_sha256}")
+    print(f"Camada raw: {result.raw_file}")
+
+    if result.processed_file is not None:
+        print(
+            "Arquivo processado: "
+            f"{result.processed_file}"
+        )
+
+    if result.rejection_file is not None:
+        print(
+            "Relatório de rejeições: "
+            f"{result.rejection_file}"
+        )
+
+    if result.duplicate_of_run_uuid is not None:
+        print(
+            "Execução original: "
+            f"{result.duplicate_of_run_uuid}"
+        )
 
     print(
         "Registros recebidos: "
@@ -114,12 +169,6 @@ def main() -> None:
     print(
         f"Avisos: {len(result.warnings)}"
     )
-
-    if result.rejection_file is not None:
-        print(
-            "Relatório de rejeições: "
-            f"{result.rejection_file}"
-        )
 
     for warning in result.warnings:
         print(f"- {warning}")
