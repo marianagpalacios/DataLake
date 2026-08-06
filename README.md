@@ -530,7 +530,7 @@ Os diretórios `raw`, `processed` e `rejected` mantêm somente arquivos `.gitkee
 
 - [x] MVP 0.4.0 — validação e qualidade dos dados;
 
-- [ ] MVP 0.5.0 — pipeline ETL, staging e rastreabilidade;
+- [x] MVP 0.5.0 — pipeline ETL, staging e rastreabilidade;
 
 - [ ] MVP 0.6.0 — API REST com FastAPI;
 
@@ -791,6 +791,10 @@ A taxa de aceitação é calculada com base nos registros que passaram pelas reg
 
 ## Status do projeto
 
-**MVP 0.5.0 — Pipeline ETL, staging e rastreabilidade em desenvolvimento.**
+**MVP 0.5.0 — Pipeline ETL, staging e rastreabilidade concluído.**
 
-A plataforma já preserva arquivos na camada raw, identifica conteúdo por SHA-256, registra execuções, mantém staging por linha, persiste problemas de qualidade e relaciona os registros válidos aos pacientes no schema `core`. A suíte atual contém 35 testes automatizados.
+A plataforma identifica arquivos por SHA-256, preserva cópias na camada raw,
+registra execuções no PostgreSQL, mantém todas as linhas em staging, persiste
+problemas de qualidade e relaciona os registros aceitos aos pacientes do core.
+
+**Próximo MVP:** `v0.6.0` — API REST com FastAPI.
