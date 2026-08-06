@@ -10,6 +10,7 @@ from datalake.quality.models import (
     DataQualityIssue,
     PatientValidationResult,
     RejectedPatientRecord,
+    ValidatedPatientRecord,
 )
 
 
@@ -121,9 +122,7 @@ def validate_patient_dataframe(
         if code
     )
 
-    valid_records: list[
-        dict[str, object]
-    ] = []
+    valid_records: list[ValidatedPatientRecord] = []
 
     rejected_records: list[
         RejectedPatientRecord
@@ -300,13 +299,15 @@ def validate_patient_dataframe(
             continue
 
         valid_records.append(
-            {
-                "external_code": external_code,
-                "birth_date": birth_date_value,
-                "biological_sex": (
-                    biological_sex_value
-                ),
-            }
+            ValidatedPatientRecord(
+                row_number=position,
+                raw_record=raw_record,
+                normalized_record={
+                    "external_code": external_code,
+                    "birth_date": birth_date_value,
+                    "biological_sex": biological_sex_value,
+                },
+            )
         )
 
     return PatientValidationResult(

@@ -19,6 +19,8 @@ MANAGED_SCHEMAS = {
     None,
     "public",
     "ingestion",
+    "staging",
+    "quality",
     "core",
 }
 

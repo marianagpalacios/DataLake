@@ -23,10 +23,19 @@ class RejectedPatientRecord:
 
 
 @dataclass(frozen=True)
+class ValidatedPatientRecord:
+    """Registro válido com origem e versão normalizada."""
+
+    row_number: int
+    raw_record: Mapping[str, str]
+    normalized_record: Mapping[str, object]
+
+
+@dataclass(frozen=True)
 class PatientValidationResult:
     """Resultado da validação linha a linha."""
 
-    valid_records: tuple[dict[str, object], ...]
+    valid_records: tuple[ValidatedPatientRecord, ...]
     rejected_records: tuple[RejectedPatientRecord, ...]
     warnings: tuple[str, ...]
 

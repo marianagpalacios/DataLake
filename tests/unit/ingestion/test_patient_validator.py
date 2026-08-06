@@ -5,6 +5,7 @@ import pytest
 
 from datalake.ingestion.exceptions import PatientValidationError
 from datalake.ingestion.validators import validate_patient_dataframe
+from datalake.quality.models import ValidatedPatientRecord
 
 
 def test_validator_normalizes_patient_values() -> None:
@@ -21,11 +22,19 @@ def test_validator_normalizes_patient_values() -> None:
     result = validate_patient_dataframe(dataframe)
 
     assert result.valid_records == (
-        {
-            "external_code": "PAT-001",
-            "birth_date": date(1995, 4, 10),
-            "biological_sex": "female",
-        },
+        ValidatedPatientRecord(
+            row_number=2,
+            raw_record={
+                "external_code": " PAT-001 ",
+                "birth_date": " 1995-04-10 ",
+                "biological_sex": " FEMALE ",
+            },
+            normalized_record={
+                "external_code": "PAT-001",
+                "birth_date": date(1995, 4, 10),
+                "biological_sex": "female",
+            },
+        ),
     )
     assert result.rejected_records == ()
     assert result.received_count == 1
@@ -49,11 +58,19 @@ def test_validator_accepts_blank_optional_values() -> None:
     result = validate_patient_dataframe(dataframe)
 
     assert result.valid_records == (
-        {
-            "external_code": "PAT-001",
-            "birth_date": None,
-            "biological_sex": None,
-        },
+        ValidatedPatientRecord(
+            row_number=2,
+            raw_record={
+                "external_code": "PAT-001",
+                "birth_date": "",
+                "biological_sex": "",
+            },
+            normalized_record={
+                "external_code": "PAT-001",
+                "birth_date": None,
+                "biological_sex": None,
+            },
+        ),
     )
     assert result.rejected_records == ()
     assert result.received_count == 1
@@ -214,7 +231,11 @@ def test_validator_separates_valid_and_invalid_records() -> None:
     result = validate_patient_dataframe(dataframe)
 
     assert len(result.valid_records) == 1
-    assert result.valid_records[0]["external_code"] == "PAT-VALID"
+    assert result.valid_records[0].row_number == 2
+    assert (
+        result.valid_records[0].normalized_record["external_code"]
+        == "PAT-VALID"
+    )
     assert len(result.rejected_records) == 1
     assert {
         issue.code for issue in result.rejected_records[0].issues

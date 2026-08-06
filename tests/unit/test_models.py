@@ -5,6 +5,10 @@ from datalake.database.base import Base
 def test_expected_tables_are_registered() -> None:
     expected_tables = {
         "ingestion.data_sources",
+        "ingestion.source_files",
+        "ingestion.ingestion_runs",
+        "staging.patient_records",
+        "quality.data_quality_issues",
         "core.patients",
         "core.exam_types",
         "core.biological_samples",
