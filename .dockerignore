@@ -1,0 +1,14 @@
+.git
+.github
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+.env
+data/raw/*
+data/processed/*
+data/rejected/*
+tests
+docs
+*.docx
+*.pdf
