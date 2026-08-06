@@ -4,9 +4,9 @@
 
 O DataLake é uma plataforma educacional de engenharia de dados em saúde. O projeto simula, em menor escala, desafios encontrados na integração de informações produzidas por laboratórios, clínicas, hospitais, instituições de pesquisa e outros sistemas de saúde.
 
-A versão atual, v0.4.0, amplia o primeiro fluxo de ingestão criado no MVP 0.3.0. O sistema lê arquivos CSV de pacientes sintéticos com Pandas, aplica validações estruturais bloqueantes, avalia cada registro individualmente, preserva os dados válidos e separa os registros inválidos.
+A versão atual, v0.5.0, transforma a ingestão de pacientes em um pipeline ETL rastreável. O sistema identifica cada arquivo por SHA-256, preserva uma cópia na camada raw, registra as execuções no PostgreSQL e mantém em staging tanto os registros válidos quanto os rejeitados.
 
-Os pacientes válidos e ainda inexistentes são inseridos no PostgreSQL. Os registros rejeitados são gravados em relatórios CSV locais contendo os dados originais, o número da linha e os problemas encontrados. Ao final, a interface de linha de comando apresenta métricas de qualidade, como registros recebidos, válidos, rejeitados, inseridos, já existentes e taxa de aceitação.
+Os pacientes válidos e ainda inexistentes são inseridos no schema `core`. Os problemas encontrados são persistidos no schema `quality`, e os artefatos processados e rejeitados são gravados localmente. Cada execução preserva sua origem, métricas, status e relação com eventuais processamentos anteriores do mesmo arquivo.
 
 O projeto utiliza somente dados sintéticos, fictícios, públicos ou adequadamente anonimizados. Dados clínicos reais e informações pessoais não devem ser adicionados ao repositório.
 
@@ -20,23 +20,23 @@ Sem um fluxo padronizado e rastreável, podem surgir registros duplicados, valor
 
 O objetivo do projeto é desenvolver progressivamente uma plataforma capaz de receber, validar, transformar, armazenar e disponibilizar dados de saúde de maneira segura, organizada e rastreável.
 
-No MVP 0.4.0, o objetivo específico é aplicar qualidade de dados à ingestão de pacientes por meio de:
+No MVP 0.5.0, o objetivo específico é tornar a ingestão rastreável de ponta a ponta por meio de:
 
-- validação estrutural do arquivo antes do processamento;
+- preservação do arquivo original na camada raw;
 
 - validação linha a linha;
 
-- separação entre registros válidos e inválidos;
+- identificação determinística por SHA-256;
 
-- continuidade do processamento dos registros válidos;
+- registro do histórico e do status das execuções;
 
-- geração de relatório CSV para os registros rejeitados;
+- persistência de todas as linhas no schema `staging`;
 
-- cálculo de métricas de qualidade e taxa de aceitação;
+- persistência dos problemas no schema `quality`;
 
-- preservação da idempotência por `external_code`;
+- detecção de arquivos já processados e reprocessamento explícito;
 
-- persistência transacional dos pacientes válidos e ainda inexistentes.
+- carga transacional dos pacientes válidos e ainda inexistentes no schema `core`.
 
 A visão completa do produto está documentada em [`docs/project-vision.md`](docs/project-vision.md).
 
@@ -46,52 +46,46 @@ A visão completa do produto está documentada em [`docs/project-vision.md`](doc
 Arquivo CSV
     |
     v
-Leitor CSV + Pandas
+Preparação do arquivo + SHA-256
     |
     v
-Validação estrutural bloqueante
-    |
-    |-- erro estrutural --> execução interrompida
+Camada raw (data/raw)
     |
     v
-Validação individual dos registros
+ingestion.data_sources
+ingestion.source_files
+ingestion.ingestion_runs (running)
     |
-    +-------------------------------+
-    |                               |
-    v                               v
-Registros válidos             Registros rejeitados
-    |                               |
-    v                               v
-Mapper para Patient           Relatório CSV local
-    |                         em data/rejected
-    v                               |
-Serviço de ingestão                 |
-    |                               |
-    v                               |
-Consulta de códigos existentes      |
-    |                               |
-    v                               |
-SQLAlchemy + Psycopg                 |
-    |                               |
-    v                               |
-PostgreSQL                          |
-    |                               |
-    +---------------+---------------+
-                    |
-                    v
-          Resumo e métricas de qualidade
-
+    v
+Leitura + validação estrutural e linha a linha
+    |
+    +--------------------------+--------------------------+
+    |                          |                          |
+    v                          v                          v
+staging.patient_records   quality.data_quality_issues  Artefatos CSV
+(válidos e rejeitados)    (problemas por campo)        processed/rejected
+    |
+    v
+Mapeamento e carga
+    |
+    v
+core.patients
+    |
+    v
+ingestion.ingestion_runs
+(completed, completed_with_rejections, failed
+ou skipped_duplicate)
 ```
 
-As configurações são carregadas do arquivo .env. O leitor transforma o CSV em um DataFrame do Pandas. Em seguida, as colunas obrigatórias e a presença de registros são verificadas. Problemas estruturais impedem a interpretação segura do arquivo e interrompem a execução.
+As configurações são carregadas do arquivo `.env`. Antes da leitura, o arquivo recebe uma identificação SHA-256 e uma cópia é preservada em `data/raw`. A fonte, o arquivo e a tentativa de processamento são registrados no schema `ingestion`.
 
-Quando a estrutura é válida, cada linha é analisada separadamente. Registros aceitos são normalizados e convertidos em objetos Patient. Registros inválidos são representados por problemas de qualidade estruturados e enviados ao gerador de relatórios.
+Quando a estrutura é válida, cada linha é analisada separadamente e persistida em `staging.patient_records` com seu número original, conteúdo bruto, valores normalizados e resultado da validação. Os problemas são armazenados em `quality.data_quality_issues`.
 
-O serviço consulta os códigos externos já armazenados, insere somente os pacientes válidos e novos e mantém a idempotência. A transação é controlada pelo SQLAlchemy: falhas na persistência provocam rollback.
+O serviço consulta os códigos externos já armazenados, insere somente os pacientes válidos e novos em `core.patients` e relaciona o staging ao registro final. A transação é controlada pelo SQLAlchemy: falhas na persistência provocam rollback e a execução é marcada como `failed`.
 
 Os relatórios de rejeição são arquivos locais em `data/rejected` e não são versionados. Eles preservam os dados originais da linha, o número da linha no CSV, os campos afetados, os códigos dos erros e as mensagens explicativas.
 
-O Alembic cria e versiona a estrutura do banco. O schema ingestion é reservado para informações relacionadas à entrada dos dados, enquanto o schema core concentra os dados tratados do domínio.
+O Alembic cria e versiona a estrutura do banco. O schema `ingestion` mantém fontes, arquivos e execuções; `staging` preserva as linhas recebidas; `quality` registra os problemas de qualidade; e `core` concentra os dados tratados do domínio.
 
 O Docker Compose declara o serviço PostgreSQL e torna a infraestrutura reproduzível. O health check utiliza pg_isready para confirmar que o banco está aceitando conexões, enquanto o volume nomeado preserva os dados quando o contêiner é recriado.
 
@@ -146,9 +140,8 @@ O Docker Desktop deve estar aberto e com o mecanismo em execução.
 
 ```powershell
 git clone https://github.com/marianagpalacios/DataLake.git
-```
-
 cd DataLake
+```
 
 ### 2. Criar o arquivo `.env`
 
@@ -241,8 +234,12 @@ Exemplo de saída em um banco no qual os pacientes ainda não existem:
 ```text
 Ingestão concluída.
 
+Execução: <uuid>
 Status: completed
 Arquivo: C:\...\DataLake\data\examples\patients.csv
+SHA-256: <sha256>
+Camada raw: C:\...\DataLake\data\raw\<hash>_patients.csv
+Arquivo processado: C:\...\DataLake\data\processed\patients_processed_<uuid>.csv
 Registros recebidos: 5
 Registros válidos: 5
 Registros rejeitados: 0
@@ -263,8 +260,13 @@ Exemplo de saída em um banco limpo para os códigos `PAT-QA-*`:
 ```text
 Ingestão concluída.
 
+Execução: <uuid>
 Status: completed_with_rejections
 Arquivo: C:\...\DataLake\data\examples\patients_with_quality_issues.csv
+SHA-256: <sha256>
+Camada raw: C:\...\DataLake\data\raw\<hash>_patients_with_quality_issues.csv
+Arquivo processado: C:\...\DataLake\data\processed\patients_with_quality_issues_processed_<uuid>.csv
+Relatório de rejeições: C:\...\DataLake\data\rejected\patients_with_quality_issues_rejected_<timestamp>.csv
 Registros recebidos: 9
 Registros válidos: 3
 Registros rejeitados: 6
@@ -272,15 +274,24 @@ Registros inseridos: 3
 Registros já existentes: 0
 Taxa de aceitação: 33.33%
 Avisos: 3
-Relatório de rejeições: C:\...\DataLake\data\rejected\patients_with_quality_issues_rejected_<timestamp>.csv
 ```
 
 O número de registros inseridos e já existentes varia conforme o conteúdo atual do banco. A quantidade de registros válidos, rejeitados e a taxa de aceitação dependem somente do arquivo processado.
 
-A pasta do relatório pode ser alterada com o argumento opcional:
+As pastas e o nome lógico da fonte podem ser alterados pela CLI:
 
 ```powershell
-python -m datalake.ingestion.cli data/examples/patients_with_quality_issues.csv --rejected-dir temp/rejected
+python -m datalake.ingestion.cli data/examples/patients_with_quality_issues.csv `
+    --source-name laboratorio_demo `
+    --raw-dir temp/raw `
+    --processed-dir temp/processed `
+    --rejected-dir temp/rejected
+```
+
+Por padrão, um arquivo com o mesmo SHA-256 e a mesma fonte que já tenha sido concluído não é processado novamente. A nova tentativa recebe o status `skipped_duplicate` e aponta para a execução original. Para reprocessar intencionalmente o conteúdo e criar uma nova execução e um novo staging, utilize:
+
+```powershell
+python -m datalake.ingestion.cli data/examples/patients.csv --force
 ```
 
 ### 9. Executar os testes
@@ -295,7 +306,7 @@ Para executar somente os testes unitários:
 python -m pytest -m "not integration"
 ```
 
-A suíte atual contém 24 testes distribuídos entre configurações, modelos, leitura de CSV, mapeamento, validação linha a linha, geração de relatórios e integração com o PostgreSQL.
+A suíte atual contém 35 testes distribuídos entre configurações, modelos, arquivos do pipeline, leitura de CSV, mapeamento, validação linha a linha, artefatos, relatórios e integração ETL com o PostgreSQL.
 
 ### 10. Conectar-se ao banco
 
@@ -381,7 +392,7 @@ Reverter a migração mais recente:
 python -m alembic downgrade -1
 ```
 
-Não execute docker compose down -v sem compreender o impacto. A opção -v remove o volume e apaga os dados armazenados no PostgreSQL.
+Não execute `docker compose down -v` sem compreender o impacto. A opção `-v` remove o volume e apaga os dados armazenados no PostgreSQL.
 
 ## Estrutura de diretórios
 
@@ -389,7 +400,8 @@ Não execute docker compose down -v sem compreender o impacto. A opção -v remo
 DataLake/
 ├── alembic/
 │   ├── versions/
-│   │   └── *_create_initial_database_schema.py
+│   │   ├── *_create_initial_database_schema.py
+│   │   └── *_add_etl_lineage_and_staging.py
 │   ├── README
 │   ├── env.py
 │   └── script.py.mako
@@ -432,11 +444,21 @@ DataLake/
 │       │   └── exceptions.py
 │       ├── models/
 │       │   ├── biological_sample.py
+│       │   ├── data_quality_issue_record.py
 │       │   ├── data_source.py
 │       │   ├── exam_result.py
 │       │   ├── exam_type.py
+│       │   ├── ingestion_run.py
 │       │   ├── laboratory_exam.py
-│       │   └── patient.py
+│       │   ├── patient.py
+│       │   ├── source_file.py
+│       │   └── staged_patient_record.py
+│       ├── pipeline/
+│       │   ├── __init__.py
+│       │   ├── artifacts.py
+│       │   ├── exceptions.py
+│       │   ├── files.py
+│       │   └── patient_etl.py
 │       ├── quality/
 │       │   ├── __init__.py
 │       │   ├── exceptions.py
@@ -446,6 +468,7 @@ DataLake/
 ├── tests/
 │   ├── integration/
 │   │   ├── test_database_connection.py
+│   │   ├── test_patient_etl.py
 │   │   └── test_patient_ingestion.py
 │   └── unit/
 │       ├── ingestion/
@@ -454,6 +477,9 @@ DataLake/
 │       │   └── test_patient_validator.py
 │       ├── quality/
 │       │   └── test_rejection_report.py
+│       ├── pipeline/
+│       │   ├── test_artifacts.py
+│       │   └── test_files.py
 │       ├── test_models.py
 │       └── test_settings.py
 ├── .editorconfig
@@ -484,13 +510,15 @@ DataLake/
 
 - `src/datalake/models`: modelos SQLAlchemy do domínio;
 
+- `src/datalake/pipeline`: preparação de arquivos, geração de artefatos e orquestração do ETL;
+
 - `src/datalake/quality`: representação dos problemas de qualidade e geração de relatórios de rejeição;
 
 - `alembic`: configuração e versões das migrações;
 
 - `tests`: testes unitários e de integração.
 
-Os diretórios raw, processed e rejected mantêm somente arquivos .gitkeep no Git. Seu conteúdo local é ignorado para reduzir o risco de exposição acidental de dados sensíveis. Apenas arquivos sintéticos preparados para demonstração podem ser versionados em data/examples.
+Os diretórios `raw`, `processed` e `rejected` mantêm somente arquivos `.gitkeep` no Git. Seu conteúdo local é ignorado para reduzir o risco de exposição acidental de dados sensíveis. A camada raw preserva a cópia identificada pelo hash do arquivo; `processed` recebe os registros normalizados aceitos; e `rejected` recebe os relatórios locais. Apenas arquivos sintéticos preparados para demonstração podem ser versionados em `data/examples`.
 
 ## Roadmap
 
@@ -530,6 +558,8 @@ O MVP 0.3.0 criou o primeiro fluxo de ingestão do DataLake: leitura com Pandas,
 
 O MVP 0.4.0 ampliou esse fluxo com validação individual, sucesso parcial, registros rejeitados estruturados, relatórios CSV locais e métricas de qualidade. Portanto, as regras descritas abaixo representam o comportamento atual.
 
+O MVP 0.5.0 adiciona a preparação do arquivo, camada raw, identificação por SHA-256, histórico de execuções, staging por linha, problemas de qualidade persistidos e ligação entre o dado recebido e o paciente armazenado em `core`.
+
 ### Formato esperado
 
 ```csv
@@ -550,6 +580,8 @@ Os valores permitidos para `biological_sex` são `female`, `male`, `intersex`, `
 A ingestão pode ser repetida sem duplicar pacientes. O serviço consulta `external_code` antes da inserção, e a constraint única do PostgreSQL permanece como proteção final.
 
 Pacientes válidos que já existam são contabilizados em Registros já existentes, mas não são atualizados nem inseridos novamente.
+
+Além dessa idempotência no domínio, o ETL evita repetir o processamento do mesmo conteúdo. Um SHA-256 já concluído para a mesma fonte gera uma execução `skipped_duplicate`. Use `--force` quando precisar criar deliberadamente uma nova execução e um novo staging para o arquivo.
 
 ### Consultar os pacientes
 
@@ -609,19 +641,117 @@ Quando existirem registros inválidos, a execução cria um CSV local em `data/r
 
 Os relatórios são ignorados pelo Git e não são armazenados no PostgreSQL nesta versão.
 
+## Rastreabilidade do ETL
+
+Cada tentativa de processamento recebe um UUID e um dos seguintes status:
+
+- `running`: execução registrada e ainda não finalizada;
+
+- `completed`: execução concluída sem rejeições;
+
+- `completed_with_rejections`: execução concluída com sucesso parcial;
+
+- `failed`: falha estrutural, de artefato ou de persistência;
+
+- `skipped_duplicate`: arquivo já concluído anteriormente e ignorado sem criar um novo staging.
+
+O arquivo é identificado pelo par fonte e SHA-256. O argumento `--force` ignora somente a decisão de pular um arquivo já concluído: ele cria uma nova execução e novos registros de staging, mas não duplica pacientes que já existam em `core.patients`.
+
+Conecte-se ao PostgreSQL para consultar a linhagem:
+
+```powershell
+docker compose exec postgres psql -U datalake_user -d datalake
+```
+
+Execuções e arquivos de origem:
+
+```sql
+SELECT
+    ir.run_uuid,
+    ir.status,
+    ir.pipeline_version,
+    sf.original_name,
+    sf.sha256,
+    ir.received_count,
+    ir.valid_count,
+    ir.rejected_count,
+    ir.inserted_count,
+    ir.existing_count,
+    ir.started_at,
+    ir.finished_at
+FROM ingestion.ingestion_runs ir
+JOIN ingestion.source_files sf
+    ON sf.id = ir.source_file_id
+ORDER BY ir.id;
+```
+
+Linhas preservadas no staging:
+
+```sql
+SELECT
+    ir.run_uuid,
+    spr.source_row_number,
+    spr.validation_status,
+    spr.normalized_external_code,
+    spr.patient_id,
+    spr.raw_record
+FROM staging.patient_records spr
+JOIN ingestion.ingestion_runs ir
+    ON ir.id = spr.ingestion_run_id
+ORDER BY ir.id, spr.source_row_number;
+```
+
+Problemas de qualidade:
+
+```sql
+SELECT
+    ir.run_uuid,
+    spr.source_row_number,
+    dqi.field,
+    dqi.code,
+    dqi.message,
+    dqi.raw_value
+FROM quality.data_quality_issues dqi
+JOIN staging.patient_records spr
+    ON spr.id = dqi.staged_record_id
+JOIN ingestion.ingestion_runs ir
+    ON ir.id = spr.ingestion_run_id
+ORDER BY ir.id, spr.source_row_number, dqi.id;
+```
+
+Relação entre staging e core:
+
+```sql
+SELECT
+    ir.run_uuid,
+    spr.source_row_number,
+    spr.normalized_external_code,
+    p.id AS patient_id,
+    p.external_code
+FROM staging.patient_records spr
+JOIN ingestion.ingestion_runs ir
+    ON ir.id = spr.ingestion_run_id
+LEFT JOIN core.patients p
+    ON p.id = spr.patient_id
+WHERE spr.validation_status = 'valid'
+ORDER BY ir.id, spr.source_row_number;
+```
+
 ### Limitações atuais
 
 - apenas pacientes em CSV são processados;
 
 - pacientes existentes não são atualizados;
 
-- não há staging;
+- apenas o pipeline de pacientes em CSV possui staging e rastreabilidade;
 
-- não há tabela ou histórico persistente de execuções;
+- a camada raw usa o sistema de arquivos local e não possui armazenamento de objetos;
 
-- não há tabela de rejeições no PostgreSQL;
+- os artefatos processados e rejeitados não são registrados como entidades próprias no banco;
 
-- não há hash ou identificação formal do arquivo;
+- arquivos são considerados duplicados somente dentro da mesma fonte lógica;
+
+- execuções interrompidas abruptamente podem permanecer com status `running`;
 
 - relatórios de rejeição são somente locais;
 
@@ -631,13 +761,15 @@ O contrato inicial está documentado em [`docs/patient-csv-ingestion.md`](docs/p
 
 ## Qualidade dos dados
 
-O MVP 0.4.0 introduz as dimensões de completude, validade, unicidade e consistência temporal na ingestão de pacientes.
+O MVP 0.4.0 introduziu as dimensões de completude, validade, unicidade e consistência temporal na ingestão de pacientes. O MVP 0.5.0 preserva os resultados dessas verificações no staging e no schema `quality`, vinculados à execução responsável.
 
 A execução apresenta:
 
-- status completed ou completed_with_rejections;
+- status `running`, `completed`, `completed_with_rejections`, `failed` ou `skipped_duplicate`;
 
 - arquivo processado;
+
+- UUID da execução, SHA-256 e caminho da cópia raw;
 
 - registros recebidos;
 
@@ -659,8 +791,6 @@ A taxa de aceitação é calculada com base nos registros que passaram pelas reg
 
 ## Status do projeto
 
-**MVP 0.4.0 — Validação e qualidade dos dados concluída.**
+**MVP 0.5.0 — Pipeline ETL, staging e rastreabilidade em desenvolvimento.**
 
-A plataforma separa registros válidos e inválidos, mantém o processamento dos dados aceitos, gera relatórios locais de rejeição e apresenta métricas de qualidade da ingestão. A suíte atual contém 24 testes automatizados.
-
-**Próximo MVP:** `v0.5.0` — pipeline ETL, staging, histórico de cargas e rastreabilidade.
+A plataforma já preserva arquivos na camada raw, identifica conteúdo por SHA-256, registra execuções, mantém staging por linha, persiste problemas de qualidade e relaciona os registros válidos aos pacientes no schema `core`. A suíte atual contém 35 testes automatizados.
