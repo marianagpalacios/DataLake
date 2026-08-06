@@ -4,7 +4,7 @@
 
 O DataLake é uma plataforma educacional de engenharia de dados em saúde. O projeto simula, em menor escala, desafios encontrados na integração de informações produzidas por laboratórios, clínicas, hospitais, instituições de pesquisa e outros sistemas de saúde.
 
-A versão atual, v0.5.0, transforma a ingestão de pacientes em um pipeline ETL rastreável. O sistema identifica cada arquivo por SHA-256, preserva uma cópia na camada raw, registra as execuções no PostgreSQL e mantém em staging tanto os registros válidos quanto os rejeitados.
+A versão atual, v0.6.0, disponibiliza uma API REST com FastAPI para consultar pacientes, arquivos, execuções, staging, problemas de qualidade e rastreabilidade. A API expõe endpoints versionados e paginados, documentação OpenAPI e health checks, preservando o pipeline ETL rastreável criado no MVP 0.5.0.
 
 Os pacientes válidos e ainda inexistentes são inseridos no schema `core`. Os problemas encontrados são persistidos no schema `quality`, e os artefatos processados e rejeitados são gravados localmente. Cada execução preserva sua origem, métricas, status e relação com eventuais processamentos anteriores do mesmo arquivo.
 
@@ -532,7 +532,7 @@ Os diretórios `raw`, `processed` e `rejected` mantêm somente arquivos `.gitkee
 
 - [x] MVP 0.5.0 — pipeline ETL, staging e rastreabilidade;
 
-- [ ] MVP 0.6.0 — API REST com FastAPI;
+- [x] MVP 0.6.0 — API REST com FastAPI;
 
 - [ ] MVP 0.7.0 — testes completos e banco de testes;
 
@@ -755,9 +755,56 @@ ORDER BY ir.id, spr.source_row_number;
 
 - relatórios de rejeição são somente locais;
 
-- não há API REST.
-
 O contrato inicial está documentado em [`docs/patient-csv-ingestion.md`](docs/patient-csv-ingestion.md), e as regras atuais de qualidade estão em [`docs/patient-data-quality.md`](docs/patient-data-quality.md).
+
+## API REST
+
+O MVP `0.6.0` disponibiliza consultas HTTP para pacientes, arquivos,
+execuções, staging, problemas de qualidade e rastreabilidade.
+
+### Executar localmente
+
+```powershell
+docker compose up -d postgres
+python -m alembic upgrade head
+
+python -m uvicorn datalake.api.app:app `
+  --host 127.0.0.1 `
+  --port 8000 `
+  --reload
+```
+
+### Executar com Docker
+
+```powershell
+docker compose up -d --build
+```
+
+### Documentação
+
+- [Swagger UI](http://localhost:8000/docs);
+- [ReDoc](http://localhost:8000/redoc);
+- [OpenAPI](http://localhost:8000/openapi.json).
+
+### Endpoints principais
+
+- `GET /health/live`;
+- `GET /health/ready`;
+- `GET /api/v1/patients`;
+- `GET /api/v1/source-files`;
+- `GET /api/v1/ingestion-runs`;
+- `GET /api/v1/ingestion-runs/{run_uuid}/records`;
+- `GET /api/v1/ingestion-runs/{run_uuid}/quality-issues`;
+- `GET /api/v1/staged-records/{record_id}/lineage`.
+
+### Segurança do contrato
+
+A API não expõe caminhos locais, registros brutos completos, valores
+brutos dos erros, mensagens técnicas internas nem credenciais.
+
+### Limitações
+
+A API desta versão é somente leitura e não possui autenticação.
 
 ## Qualidade dos dados
 
@@ -791,10 +838,13 @@ A taxa de aceitação é calculada com base nos registros que passaram pelas reg
 
 ## Status do projeto
 
-**MVP 0.5.0 — Pipeline ETL, staging e rastreabilidade concluído.**
+**MVP 0.6.0 — API REST com FastAPI concluída.**
 
-A plataforma identifica arquivos por SHA-256, preserva cópias na camada raw,
-registra execuções no PostgreSQL, mantém todas as linhas em staging, persiste
-problemas de qualidade e relaciona os registros aceitos aos pacientes do core.
+A plataforma disponibiliza endpoints versionados e paginados para consultar
+pacientes, arquivos, execuções, staging, problemas de qualidade e lineage.
 
-**Próximo MVP:** `v0.6.0` — API REST com FastAPI.
+A API possui documentação OpenAPI, validação de parâmetros, respostas
+tipadas, tratamento de erros e execução por Docker Compose.
+
+**Próximo MVP:** `v0.7.0` — testes completos, banco exclusivo de testes e
+cobertura.
