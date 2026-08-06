@@ -12,4 +12,15 @@ __all__ = [
     "ExamType",
     "LaboratoryExam",
     "Patient",
+    "DataQualityIssueRecord",
+    "IngestionRun",
+    "SourceFile",
+    "StagedPatientRecord",
 ]
+
+from datalake.models.data_quality_issue_record import (
+    DataQualityIssueRecord,
+)
+from datalake.models.ingestion_run import IngestionRun
+from datalake.models.source_file import SourceFile
+from datalake.models.staged_patient_record import StagedPatientRecord

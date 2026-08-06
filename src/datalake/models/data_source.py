@@ -9,6 +9,7 @@ from datalake.database.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from datalake.models.laboratory_exam import LaboratoryExam
+    from datalake.models.source_file import SourceFile
 
 
 class DataSource(TimestampMixin, Base):
@@ -64,5 +65,9 @@ class DataSource(TimestampMixin, Base):
     )
 
     laboratory_exams: Mapped[list[LaboratoryExam]] = relationship(
+        back_populates="data_source",
+    )
+
+    source_files: Mapped[list[SourceFile]] = relationship(
         back_populates="data_source",
     )
