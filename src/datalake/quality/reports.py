@@ -26,41 +26,23 @@ def write_rejected_patient_report(
             exist_ok=True,
         )
 
-        timestamp = datetime.now(
-            timezone.utc
-        ).strftime(
-            "%Y%m%dT%H%M%S%fZ"
-        )
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
 
-        report_path = target_dir / (
-            f"{source_path.stem}_rejected_"
-            f"{timestamp}.csv"
-        )
+        report_path = target_dir / (f"{source_path.stem}_rejected_{timestamp}.csv")
 
         rows: list[dict[str, object]] = []
 
         for rejected in rejected_records:
-            row: dict[str, object] = dict(
-                rejected.raw_record
-            )
+            row: dict[str, object] = dict(rejected.raw_record)
 
-            row["source_row_number"] = (
-                rejected.row_number
-            )
+            row["source_row_number"] = rejected.row_number
 
-            row["error_codes"] = "|".join(
-                issue.code
-                for issue in rejected.issues
-            )
+            row["error_codes"] = "|".join(issue.code for issue in rejected.issues)
 
-            row["error_fields"] = "|".join(
-                issue.field
-                for issue in rejected.issues
-            )
+            row["error_fields"] = "|".join(issue.field for issue in rejected.issues)
 
             row["error_messages"] = " | ".join(
-                issue.message
-                for issue in rejected.issues
+                issue.message for issue in rejected.issues
             )
 
             rows.append(row)
@@ -75,6 +57,5 @@ def write_rejected_patient_report(
 
     except OSError as error:
         raise QualityReportError(
-            "Não foi possível gravar o relatório "
-            "de registros rejeitados."
+            "Não foi possível gravar o relatório de registros rejeitados."
         ) from error

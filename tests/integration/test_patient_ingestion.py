@@ -51,23 +51,15 @@ def test_patient_ingestion_is_idempotent(
         assert second_result.existing_count == 2
 
         with test_session_factory() as session:
-            statement = select(Patient).where(
-                Patient.external_code.in_(codes)
-            )
+            statement = select(Patient).where(Patient.external_code.in_(codes))
 
-            stored_patients = list(
-                session.scalars(statement)
-            )
+            stored_patients = list(session.scalars(statement))
 
         assert len(stored_patients) == 2
 
     finally:
         with test_session_factory.begin() as session:
-            session.execute(
-                delete(Patient).where(
-                    Patient.external_code.in_(codes)
-                )
-            )
+            session.execute(delete(Patient).where(Patient.external_code.in_(codes)))
 
 
 @pytest.mark.integration
@@ -108,21 +100,11 @@ def test_patient_ingestion_inserts_only_valid_records(
         assert result.rejection_file.parent == rejection_dir.resolve()
 
         with test_session_factory() as session:
-            statement = select(Patient).where(
-                Patient.external_code.in_(codes)
-            )
-            stored_patients = list(
-                session.scalars(statement)
-            )
+            statement = select(Patient).where(Patient.external_code.in_(codes))
+            stored_patients = list(session.scalars(statement))
 
-        assert {
-            patient.external_code for patient in stored_patients
-        } == {codes[0]}
+        assert {patient.external_code for patient in stored_patients} == {codes[0]}
 
     finally:
         with test_session_factory.begin() as session:
-            session.execute(
-                delete(Patient).where(
-                    Patient.external_code.in_(codes)
-                )
-            )
+            session.execute(delete(Patient).where(Patient.external_code.in_(codes)))

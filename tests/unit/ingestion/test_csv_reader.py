@@ -12,8 +12,7 @@ def test_read_csv_file_returns_dataframe(
     file_path = tmp_path / "patients.csv"
 
     file_path.write_text(
-        "external_code,birth_date,biological_sex\n"
-        "PAT-001,1995-04-10,female\n",
+        "external_code,birth_date,biological_sex\nPAT-001,1995-04-10,female\n",
         encoding="utf-8",
     )
 
@@ -60,8 +59,7 @@ def test_read_csv_file_rejects_malformed_csv(
     malformed_file = tmp_path / "malformed.csv"
 
     malformed_file.write_text(
-        "external_code,birth_date,biological_sex\n"
-        "\"PAT-001,1995-04-10,female\n",
+        'external_code,birth_date,biological_sex\n"PAT-001,1995-04-10,female\n',
         encoding="utf-8",
     )
 

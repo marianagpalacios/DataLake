@@ -25,9 +25,7 @@ def api_client(
         finally:
             session.close()
 
-    app.dependency_overrides[
-        get_session
-    ] = override_get_session
+    app.dependency_overrides[get_session] = override_get_session
 
     try:
         with TestClient(app) as client:

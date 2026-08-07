@@ -2,16 +2,16 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
-from alembic import command
 from alembic.config import Config
 from pydantic import SecretStr
 from pydantic_settings import (
     BaseSettings,
     SettingsConfigDict,
 )
-from sqlalchemy import Engine, URL, create_engine
+from sqlalchemy import URL, Engine, create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from alembic import command
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -38,10 +38,7 @@ class TestDatabaseSettings(BaseSettings):
         return URL.create(
             drivername="postgresql+psycopg",
             username=self.postgres_user,
-            password=(
-                self.postgres_password
-                .get_secret_value()
-            ),
+            password=(self.postgres_password.get_secret_value()),
             host=self.postgres_host,
             port=self.postgres_port,
             database=self.postgres_db,
@@ -54,10 +51,7 @@ def test_database_settings() -> TestDatabaseSettings:
 
     database_name = settings.postgres_db.lower()
 
-    if (
-        database_name == "datalake"
-        or not database_name.endswith("_test")
-    ):
+    if database_name == "datalake" or not database_name.endswith("_test"):
         pytest.exit(
             "Execução interrompida: o banco configurado "
             "não parece ser exclusivo de testes."
@@ -97,9 +91,7 @@ def test_session_factory(
 def migrated_test_database(
     test_engine: Engine,
 ) -> Iterator[None]:
-    alembic_config = Config(
-        str(PROJECT_ROOT / "alembic.ini")
-    )
+    alembic_config = Config(str(PROJECT_ROOT / "alembic.ini"))
 
     alembic_config.set_main_option(
         "script_location",
@@ -107,9 +99,7 @@ def migrated_test_database(
     )
 
     with test_engine.begin() as connection:
-        alembic_config.attributes[
-            "connection"
-        ] = connection
+        alembic_config.attributes["connection"] = connection
 
         command.upgrade(
             alembic_config,
@@ -128,21 +118,13 @@ def pytest_collection_modifyitems(
         path_parts = set(item.path.parts)
 
         if "unit" in path_parts:
-            item.add_marker(
-                pytest.mark.unit
-            )
+            item.add_marker(pytest.mark.unit)
 
         if "integration" in path_parts:
-            item.add_marker(
-                pytest.mark.integration
-            )
+            item.add_marker(pytest.mark.integration)
 
         if "api" in path_parts:
-            item.add_marker(
-                pytest.mark.api
-            )
+            item.add_marker(pytest.mark.api)
 
         if "migrations" in path_parts:
-            item.add_marker(
-                pytest.mark.migration
-            )
+            item.add_marker(pytest.mark.migration)

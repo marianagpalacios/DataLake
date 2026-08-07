@@ -13,7 +13,6 @@ from datalake.api.schemas import (
     StagedRecordLineageRead,
 )
 
-
 router = APIRouter(
     prefix="/staged-records",
     tags=["lineage"],
@@ -34,33 +33,18 @@ def read_record_lineage(
     )
 
     patient = (
-        PatientRead.model_validate(
-            record.patient
-        )
+        PatientRead.model_validate(record.patient)
         if record.patient is not None
         else None
     )
 
     return StagedRecordLineageRead(
-        record=(
-            StagedPatientRecordRead
-            .model_validate(record)
-        ),
-        ingestion_run=(
-            IngestionRunRead.model_validate(
-                record.ingestion_run
-            )
-        ),
-        source_file=(
-            SourceFileRead.model_validate(
-                record.ingestion_run.source_file
-            )
-        ),
+        record=(StagedPatientRecordRead.model_validate(record)),
+        ingestion_run=(IngestionRunRead.model_validate(record.ingestion_run)),
+        source_file=(SourceFileRead.model_validate(record.ingestion_run.source_file)),
         patient=patient,
         issues=[
-            DataQualityIssueRead.model_validate(
-                issue
-            )
+            DataQualityIssueRead.model_validate(issue)
             for issue in record.quality_issues
         ],
     )

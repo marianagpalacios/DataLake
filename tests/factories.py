@@ -23,10 +23,7 @@ def create_patient(
     biological_sex: str | None = "unknown",
 ) -> Patient:
     patient = Patient(
-        external_code=(
-            external_code
-            or f"TEST-{uuid4().hex[:12].upper()}"
-        ),
+        external_code=(external_code or f"TEST-{uuid4().hex[:12].upper()}"),
         biological_sex=biological_sex,
     )
 
@@ -42,10 +39,7 @@ def create_data_source(
     name: str | None = None,
 ) -> DataSource:
     source = DataSource(
-        name=(
-            name
-            or f"test-source-{uuid4().hex}"
-        ),
+        name=(name or f"test-source-{uuid4().hex}"),
         source_type="csv",
         description="Fonte sintética de teste.",
     )
@@ -63,10 +57,7 @@ def create_source_file(
     sha256: str | None = None,
     original_name: str = "patients.csv",
 ) -> SourceFile:
-    file_hash = (
-        sha256
-        or uuid4().hex * 2
-    )
+    file_hash = sha256 or uuid4().hex * 2
 
     source_file = SourceFile(
         data_source_id=data_source.id,
@@ -101,26 +92,15 @@ def create_ingestion_run(
         source_file_id=source_file.id,
         status=status,
         pipeline_version="0.5.0",
-        started_at=(
-            started_at
-            or datetime.now(timezone.utc)
-        ),
-        finished_at=datetime.now(
-            timezone.utc
-        ),
+        started_at=(started_at or datetime.now(timezone.utc)),
+        finished_at=datetime.now(timezone.utc),
         received_count=received_count,
         valid_count=valid_count,
         rejected_count=rejected_count,
         inserted_count=inserted_count,
         existing_count=existing_count,
         acceptance_rate=Decimal(
-            str(
-                valid_count
-                / received_count
-                * 100
-                if received_count
-                else 0
-            )
+            str(valid_count / received_count * 100 if received_count else 0)
         ),
         error_message=error_message,
         processed_file_path=processed_file_path,
@@ -145,23 +125,11 @@ def create_staged_record(
         ingestion_run_id=run.id,
         source_row_number=source_row_number,
         raw_record={
-            "external_code": (
-                patient.external_code
-                if patient
-                else "INVALID"
-            ),
+            "external_code": (patient.external_code if patient else "INVALID"),
         },
-        normalized_external_code=(
-            patient.external_code
-            if patient
-            else None
-        ),
+        normalized_external_code=(patient.external_code if patient else None),
         validation_status=validation_status,
-        patient_id=(
-            patient.id
-            if patient
-            else None
-        ),
+        patient_id=(patient.id if patient else None),
     )
 
     session.add(record)
@@ -181,10 +149,7 @@ def create_quality_issue(
         staged_record_id=staged_record.id,
         field=field,
         code=code,
-        message=(
-            "A data deve usar o formato "
-            "AAAA-MM-DD."
-        ),
+        message=("A data deve usar o formato AAAA-MM-DD."),
         raw_value="10/04/1995",
     )
 

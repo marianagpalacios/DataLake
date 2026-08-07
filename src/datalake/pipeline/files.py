@@ -29,9 +29,7 @@ def calculate_sha256(file_path: str | Path) -> str:
                 digest.update(chunk)
 
     except OSError as error:
-        raise SourceFileError(
-            f"Não foi possível calcular o hash de {path}."
-        ) from error
+        raise SourceFileError(f"Não foi possível calcular o hash de {path}.") from error
 
     return digest.hexdigest()
 
@@ -45,14 +43,11 @@ def prepare_source_file(
     original_path = Path(file_path).resolve()
 
     if not original_path.exists():
-        raise SourceFileError(
-            f"Arquivo não encontrado: {original_path}."
-        )
+        raise SourceFileError(f"Arquivo não encontrado: {original_path}.")
 
     if not original_path.is_file():
         raise SourceFileError(
-            "O caminho informado não representa um arquivo: "
-            f"{original_path}."
+            f"O caminho informado não representa um arquivo: {original_path}."
         )
 
     file_hash = calculate_sha256(original_path)
@@ -64,9 +59,7 @@ def prepare_source_file(
         exist_ok=True,
     )
 
-    raw_path = target_dir / (
-        f"{file_hash[:12]}_{original_path.name}"
-    )
+    raw_path = target_dir / (f"{file_hash[:12]}_{original_path.name}")
 
     try:
         if not raw_path.exists():
@@ -77,8 +70,7 @@ def prepare_source_file(
 
     except OSError as error:
         raise SourceFileError(
-            "Não foi possível preservar o arquivo "
-            "na camada raw."
+            "Não foi possível preservar o arquivo na camada raw."
         ) from error
 
     return PreparedSourceFile(

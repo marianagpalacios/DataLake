@@ -36,16 +36,12 @@ def test_valid_staged_record_lineage_contains_patient(
         record_id = record.id
         expected_external_code = patient.external_code
 
-    response = api_client.get(
-        f"/api/v1/staged-records/{record_id}/lineage"
-    )
+    response = api_client.get(f"/api/v1/staged-records/{record_id}/lineage")
 
     assert response.status_code == 200
     body = response.json()
     assert body["record"]["validation_status"] == "valid"
-    assert body["patient"]["external_code"] == (
-        expected_external_code
-    )
+    assert body["patient"]["external_code"] == (expected_external_code)
     assert body["issues"] == []
 
 
@@ -83,16 +79,12 @@ def test_rejected_staged_record_lineage_contains_issues(
         )
         record_id = record.id
 
-    response = api_client.get(
-        f"/api/v1/staged-records/{record_id}/lineage"
-    )
+    response = api_client.get(f"/api/v1/staged-records/{record_id}/lineage")
     body = response.json()
 
     assert response.status_code == 200
     assert body["record"]["validation_status"] == "rejected"
-    assert body["ingestion_run"]["status"] == (
-        "completed_with_rejections"
-    )
+    assert body["ingestion_run"]["status"] == ("completed_with_rejections")
     assert body["source_file"]["sha256"] == expected_hash
     assert body["patient"] is None
     assert body["issues"][0]["code"] == "invalid_date_format"

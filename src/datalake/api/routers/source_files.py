@@ -18,7 +18,6 @@ from datalake.api.schemas import (
     SourceFileRead,
 )
 
-
 router = APIRouter(
     prefix="/source-files",
     tags=["source-files"],
@@ -57,12 +56,7 @@ def read_source_files(
         sha256=sha256,
     )
 
-    items = [
-        SourceFileRead.model_validate(
-            source_file
-        )
-        for source_file in files
-    ]
+    items = [SourceFileRead.model_validate(source_file) for source_file in files]
 
     return build_page(
         items,
@@ -85,6 +79,4 @@ def read_source_file(
         source_file_id,
     )
 
-    return SourceFileRead.model_validate(
-        source_file
-    )
+    return SourceFileRead.model_validate(source_file)

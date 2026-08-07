@@ -14,25 +14,13 @@ def map_patient_record(
     biological_sex = record.get("biological_sex")
 
     if not isinstance(external_code, str):
-        raise TypeError(
-            "`external_code` deve ser um texto."
-        )
+        raise TypeError("`external_code` deve ser um texto.")
 
-    if (
-        birth_date is not None
-        and not isinstance(birth_date, date)
-    ):
-        raise TypeError(
-            "`birth_date` deve ser uma data ou None."
-        )
+    if birth_date is not None and not isinstance(birth_date, date):
+        raise TypeError("`birth_date` deve ser uma data ou None.")
 
-    if (
-        biological_sex is not None
-        and not isinstance(biological_sex, str)
-    ):
-        raise TypeError(
-            "`biological_sex` deve ser um texto ou None."
-        )
+    if biological_sex is not None and not isinstance(biological_sex, str):
+        raise TypeError("`biological_sex` deve ser um texto ou None.")
 
     return Patient(
         external_code=external_code,

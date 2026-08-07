@@ -19,9 +19,11 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-     "httpx>=0.28,<1.0",
+    "build>=1.2,<2.0",
+    "httpx>=0.28,<1.0",
     "pytest>=9,<10",
     "pytest-cov>=7,<8",
+    "ruff>=0.16,<1.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -61,3 +63,29 @@ directory = "htmlcov"
 [tool.coverage.xml]
 output = "coverage.xml"
 
+[tool.ruff]
+target-version = "py314"
+line-length = 88
+extend-exclude = [
+    "alembic/versions",
+]
+
+[tool.ruff.lint]
+select = [
+    "E4",
+    "E7",
+    "E9",
+    "F",
+    "I",
+    "B",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "datalake",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"

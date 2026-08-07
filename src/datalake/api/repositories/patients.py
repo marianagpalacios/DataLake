@@ -20,28 +20,14 @@ def list_patients(
     conditions = []
 
     if external_code:
-        conditions.append(
-            Patient.external_code.ilike(
-                f"%{external_code}%"
-            )
-        )
+        conditions.append(Patient.external_code.ilike(f"%{external_code}%"))
 
     if biological_sex:
-        conditions.append(
-            Patient.biological_sex
-            == biological_sex
-        )
+        conditions.append(Patient.biological_sex == biological_sex)
 
-    count_statement = (
-        select(func.count())
-        .select_from(Patient)
-        .where(*conditions)
-    )
+    count_statement = select(func.count()).select_from(Patient).where(*conditions)
 
-    total = (
-        session.scalar(count_statement)
-        or 0
-    )
+    total = session.scalar(count_statement) or 0
 
     statement = (
         select(Patient)
@@ -51,9 +37,7 @@ def list_patients(
         .limit(limit)
     )
 
-    patients = list(
-        session.scalars(statement)
-    )
+    patients = list(session.scalars(statement))
 
     return patients, total
 

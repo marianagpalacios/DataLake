@@ -8,15 +8,9 @@ class PatientValidationError(Exception):
     def __init__(self, errors: list[str]) -> None:
         self.errors = tuple(errors)
 
-        details = "\n".join(
-            f"- {message}"
-            for message in self.errors
-        )
+        details = "\n".join(f"- {message}" for message in self.errors)
 
-        super().__init__(
-            "O arquivo de pacientes possui erros:\n"
-            f"{details}"
-        )
+        super().__init__(f"O arquivo de pacientes possui erros:\n{details}")
 
 
 class PatientIngestionError(Exception):
