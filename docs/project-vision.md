@@ -28,7 +28,7 @@ Além das diferenças nos nomes das colunas, também podem existir variações e
 
 Em projetos de saúde, pesquisa e bioinformática, essas diferenças dificultam a integração e a análise conjunta dos dados. Antes que as informações possam ser utilizadas com segurança, elas precisam ser recebidas, validadas, padronizadas, armazenadas e disponibilizadas de maneira rastreável.
 
-O projeto DataLake será desenvolvido como uma plataforma educacional de engenharia de dados em saúde. Seu propósito é simular, em menor escala, desafios encontrados em projetos reais de integração de dados, como plataformas de pesquisa, Data Lakes institucionais e iniciativas semelhantes ao Projeto SABIÁ da UTFPR.
+O DataLake é um projeto pessoal desenvolvido como uma plataforma educacional de engenharia de dados em saúde. Seu propósito é simular, em menor escala, desafios encontrados em projetos reais de integração de dados, como plataformas de pesquisa e Data Lakes institucionais.
 
 Para preservar a segurança e a privacidade, o projeto utilizará somente dados sintéticos, fictícios, públicos ou adequadamente anonimizados.
 
