@@ -13,6 +13,15 @@ Todas as alterações relevantes do DataLake são registradas neste arquivo.
 - observabilidade;
 - processamento assíncrono.
 
+## [1.0.0] — 2026
+
+### Marco
+
+- primeira versão estável do DataLake;
+- consolidação dos oito MVPs;
+- documentação e automação finalizadas;
+- projeto preparado para apresentação técnica e portfólio.
+
 ## [0.8.0] — 2026
 
 ### Adicionado

@@ -18,6 +18,14 @@ Dados produzidos por laboratórios, clínicas, hospitais e sistemas de pesquisa 
 
 O DataLake demonstra como receber um arquivo, preservar sua versão original, validar cada linha, separar registros aceitos e rejeitados, registrar problemas de qualidade e carregar somente dados confiáveis. Cada etapa permanece vinculada à fonte e à execução responsável pelo processamento.
 
+## Status do projeto
+
+**Versão estável v1.0.0 concluída.**
+
+O DataLake implementa uma plataforma educacional completa de engenharia de
+dados em saúde, incluindo ingestão, qualidade, ETL, staging, rastreabilidade,
+API REST, testes isolados e integração contínua.
+
 ## Principais capacidades
 
 - ingestão de pacientes sintéticos por CSV;
@@ -338,8 +346,7 @@ DataLake/
 - [x] MVP 0.6.0 — API REST com FastAPI;
 - [x] MVP 0.7.0 — testes isolados e cobertura;
 - [x] MVP 0.8.0 — GitHub Actions e preparação do portfólio.
-
-Próximo marco: versão estável `v1.0.0`.
+- [x] v1.0.0 — primeira versão estável do projeto.
 
 ## Documentação
 
@@ -372,7 +379,6 @@ Próximo marco: versão estável `v1.0.0`.
 
 ## Próximas evoluções
 
-- consolidar uma versão estável `v1.0.0`;
 - adicionar autenticação e autorização;
 - disponibilizar armazenamento compatível com objetos;
 - permitir execução assíncrona e agendada dos pipelines;
