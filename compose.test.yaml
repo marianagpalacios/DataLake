@@ -1,0 +1,31 @@
+name: datalake-test
+
+services:
+  postgres-test:
+    image: postgres:17-alpine
+    restart: "no"
+
+    environment:
+      POSTGRES_DB: ${TEST_POSTGRES_DB}
+      POSTGRES_USER: ${TEST_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${TEST_POSTGRES_PASSWORD}
+
+    ports:
+      - "${TEST_POSTGRES_PORT:-5433}:5432"
+
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}",
+        ]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 3s
+
+volumes:
+  postgres_test_data:

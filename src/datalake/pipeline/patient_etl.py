@@ -7,7 +7,11 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
-from datalake.database.session import session_scope
+from datalake.database.session import (
+    SessionFactory,
+    SessionFactoryType,
+    session_scope,
+)
 from datalake.ingestion.mappers import map_patient_record
 from datalake.ingestion.readers import read_csv_file
 from datalake.ingestion.validators import validate_patient_dataframe
@@ -89,9 +93,10 @@ def _get_or_create_data_source(
 def _mark_run_failed(
     run_id: int,
     error: Exception,
+    session_factory: SessionFactoryType,
 ) -> None:
     try:
-        with session_scope() as session:
+        with session_scope(session_factory) as session:
             run = session.get(
                 IngestionRun,
                 run_id,
@@ -118,6 +123,7 @@ def run_patient_etl(
     processed_dir: str | Path = "data/processed",
     rejected_dir: str | Path = "data/rejected",
     force: bool = False,
+    session_factory: SessionFactoryType = SessionFactory,
 ) -> PatientETLResult:
     prepared = prepare_source_file(
         file_path=file_path,
@@ -127,7 +133,7 @@ def run_patient_etl(
     run_id: int | None = None
     run_uuid: UUID | None = None
 
-    with session_scope() as session:
+    with session_scope(session_factory) as session:
         data_source = _get_or_create_data_source(
             session,
             source_name,
@@ -272,7 +278,7 @@ def run_patient_etl(
             )
         )
 
-        with session_scope() as session:
+        with session_scope(session_factory) as session:
             run = session.get(
                 IngestionRun,
                 run_id,
@@ -443,6 +449,7 @@ def run_patient_etl(
         _mark_run_failed(
             run_id,
             error,
+            session_factory,
         )
 
         if isinstance(error, PatientETLError):

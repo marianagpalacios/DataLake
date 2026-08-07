@@ -1,127 +1,100 @@
-from datetime import datetime, timezone
-from decimal import Decimal
-from uuid import uuid4
-
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import delete
+from sqlalchemy.orm import Session, sessionmaker
 
-from datalake.database.session import SessionFactory
-from datalake.models.data_quality_issue_record import (
-    DataQualityIssueRecord,
-)
-from datalake.models.data_source import DataSource
-from datalake.models.ingestion_run import IngestionRun
-from datalake.models.source_file import SourceFile
-from datalake.models.staged_patient_record import (
-    StagedPatientRecord,
+from tests.factories import (
+    create_data_source,
+    create_ingestion_run,
+    create_patient,
+    create_quality_issue,
+    create_source_file,
+    create_staged_record,
 )
 
 
 @pytest.mark.integration
-def test_staged_record_lineage(
+def test_valid_staged_record_lineage_contains_patient(
     api_client: TestClient,
+    test_session_factory: sessionmaker[Session],
 ) -> None:
-    suffix = uuid4().hex
-    source_name = f"lineage-api-test-{suffix}"
-    expected_hash = suffix * 2
-    source_id: int | None = None
-    source_file_id: int | None = None
-
-    try:
-        with SessionFactory.begin() as session:
-            source = DataSource(
-                name=source_name,
-                source_type="csv",
-                description="Fonte temporária do teste de lineage.",
-            )
-            session.add(source)
-            session.flush()
-            source_id = source.id
-
-            source_file = SourceFile(
-                data_source_id=source.id,
-                sha256=expected_hash,
-                original_name="invalid_patients.csv",
-                stored_path=(
-                    "data/raw/invalid_patients.csv"
-                ),
-                size_bytes=128,
-            )
-            session.add(source_file)
-            session.flush()
-            source_file_id = source_file.id
-
-            ingestion_run = IngestionRun(
-                source_file_id=source_file.id,
-                status="completed_with_rejections",
-                pipeline_version="0.6.0",
-                finished_at=datetime.now(timezone.utc),
-                received_count=1,
-                valid_count=0,
-                rejected_count=1,
-                inserted_count=0,
-                existing_count=0,
-                acceptance_rate=Decimal("0.00"),
-            )
-            session.add(ingestion_run)
-            session.flush()
-
-            staged_record = StagedPatientRecord(
-                ingestion_run_id=ingestion_run.id,
-                source_row_number=2,
-                raw_record={
-                    "external_code": "PAT-LINEAGE-INVALID",
-                    "birth_date": "10/04/1995",
-                    "biological_sex": "female",
-                },
-                normalized_external_code=(
-                    "PAT-LINEAGE-INVALID"
-                ),
-                validation_status="rejected",
-            )
-            session.add(staged_record)
-            session.flush()
-
-            issue = DataQualityIssueRecord(
-                staged_record_id=staged_record.id,
-                field="birth_date",
-                code="invalid_date_format",
-                message=(
-                    "A data deve usar o formato AAAA-MM-DD."
-                ),
-                raw_value="10/04/1995",
-            )
-            session.add(issue)
-            record_id = staged_record.id
-
-        response = api_client.get(
-            f"/api/v1/staged-records/{record_id}/lineage"
+    with test_session_factory.begin() as session:
+        source = create_data_source(session)
+        source_file = create_source_file(
+            session,
+            data_source=source,
         )
-        body = response.json()
-
-        assert response.status_code == 200
-        assert body["record"]["validation_status"] == "rejected"
-        assert (
-            body["ingestion_run"]["status"]
-            == "completed_with_rejections"
+        run = create_ingestion_run(
+            session,
+            source_file=source_file,
         )
-        assert body["source_file"]["sha256"] == expected_hash
-        assert body["patient"] is None
-        assert body["issues"][0]["code"] == "invalid_date_format"
+        patient = create_patient(session)
+        record = create_staged_record(
+            session,
+            run=run,
+            patient=patient,
+        )
+        record_id = record.id
+        expected_external_code = patient.external_code
 
-    finally:
-        with SessionFactory.begin() as session:
-            if source_file_id is not None:
-                session.execute(
-                    delete(SourceFile).where(
-                        SourceFile.id == source_file_id
-                    )
-                )
+    response = api_client.get(
+        f"/api/v1/staged-records/{record_id}/lineage"
+    )
 
-            if source_id is not None:
-                session.execute(
-                    delete(DataSource).where(
-                        DataSource.id == source_id
-                    )
-                )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["record"]["validation_status"] == "valid"
+    assert body["patient"]["external_code"] == (
+        expected_external_code
+    )
+    assert body["issues"] == []
+
+
+@pytest.mark.integration
+def test_rejected_staged_record_lineage_contains_issues(
+    api_client: TestClient,
+    test_session_factory: sessionmaker[Session],
+) -> None:
+    expected_hash = "f" * 64
+
+    with test_session_factory.begin() as session:
+        source = create_data_source(session)
+        source_file = create_source_file(
+            session,
+            data_source=source,
+            sha256=expected_hash,
+        )
+        run = create_ingestion_run(
+            session,
+            source_file=source_file,
+            status="completed_with_rejections",
+            received_count=1,
+            valid_count=0,
+            rejected_count=1,
+            inserted_count=0,
+        )
+        record = create_staged_record(
+            session,
+            run=run,
+            validation_status="rejected",
+        )
+        create_quality_issue(
+            session,
+            staged_record=record,
+        )
+        record_id = record.id
+
+    response = api_client.get(
+        f"/api/v1/staged-records/{record_id}/lineage"
+    )
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["record"]["validation_status"] == "rejected"
+    assert body["ingestion_run"]["status"] == (
+        "completed_with_rejections"
+    )
+    assert body["source_file"]["sha256"] == expected_hash
+    assert body["patient"] is None
+    assert body["issues"][0]["code"] == "invalid_date_format"
+    assert "raw_record" not in body["record"]
+    assert "raw_value" not in body["issues"][0]

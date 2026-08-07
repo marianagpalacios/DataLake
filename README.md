@@ -4,7 +4,7 @@
 
 O DataLake é uma plataforma educacional de engenharia de dados em saúde. O projeto simula, em menor escala, desafios encontrados na integração de informações produzidas por laboratórios, clínicas, hospitais, instituições de pesquisa e outros sistemas de saúde.
 
-A versão atual, v0.6.0, disponibiliza uma API REST com FastAPI para consultar pacientes, arquivos, execuções, staging, problemas de qualidade e rastreabilidade. A API expõe endpoints versionados e paginados, documentação OpenAPI e health checks, preservando o pipeline ETL rastreável criado no MVP 0.5.0.
+A versão atual, v0.7.0, acrescenta uma suíte automatizada com PostgreSQL exclusivo para testes e cobertura mínima de linhas e branches. A plataforma preserva a API REST com FastAPI e o pipeline ETL rastreável das versões anteriores.
 
 Os pacientes válidos e ainda inexistentes são inseridos no schema `core`. Os problemas encontrados são persistidos no schema `quality`, e os artefatos processados e rejeitados são gravados localmente. Cada execução preserva sua origem, métricas, status e relação com eventuais processamentos anteriores do mesmo arquivo.
 
@@ -294,21 +294,7 @@ Por padrão, um arquivo com o mesmo SHA-256 e a mesma fonte que já tenha sido c
 python -m datalake.ingestion.cli data/examples/patients.csv --force
 ```
 
-### 9. Executar os testes
-
-```powershell
-python -m pytest
-```
-
-Para executar somente os testes unitários:
-
-```powershell
-python -m pytest -m "not integration"
-```
-
-A suíte atual contém 35 testes distribuídos entre configurações, modelos, arquivos do pipeline, leitura de CSV, mapeamento, validação linha a linha, artefatos, relatórios e integração ETL com o PostgreSQL.
-
-### 10. Conectar-se ao banco
+### 9. Conectar-se ao banco
 
 ```powershell
 docker compose exec postgres psql -U datalake_user -d datalake
@@ -534,7 +520,7 @@ Os diretórios `raw`, `processed` e `rejected` mantêm somente arquivos `.gitkee
 
 - [x] MVP 0.6.0 — API REST com FastAPI;
 
-- [ ] MVP 0.7.0 — testes completos e banco de testes;
+- [x] MVP 0.7.0 — testes completos, banco exclusivo e cobertura;
 
 - [ ] MVP 0.8.0 — GitHub Actions e preparação do portfólio.
 
@@ -806,6 +792,77 @@ brutos dos erros, mensagens técnicas internas nem credenciais.
 
 A API desta versão é somente leitura e não possui autenticação.
 
+## Estratégia de testes
+
+O MVP `0.7.0` introduz um ambiente PostgreSQL exclusivo para testes.
+
+Os testes não utilizam o banco `datalake` de desenvolvimento.
+
+### Preparar o ambiente
+
+```powershell
+Copy-Item .env.test.example .env.test
+
+docker compose `
+  --env-file .env.test `
+  -f compose.test.yaml `
+  up -d
+```
+
+### Executar todos os testes
+
+```powershell
+python -m pytest
+```
+
+### Testes unitários
+
+```powershell
+python -m pytest -m unit
+```
+
+### Testes de integração
+
+```powershell
+python -m pytest -m integration
+```
+
+### Testes da API
+
+```powershell
+python -m pytest -m api
+```
+
+### Testes das migrações
+
+```powershell
+python -m pytest -m migration
+```
+
+### Cobertura
+
+```powershell
+python -m pytest `
+  --cov=datalake `
+  --cov-branch `
+  --cov-report=term-missing `
+  --cov-report=html `
+  --cov-report=xml
+```
+
+A cobertura mínima exigida é 80%.
+
+O relatório navegável é gerado em `htmlcov/index.html`.
+
+### Encerrar o banco de testes
+
+```powershell
+docker compose `
+  --env-file .env.test `
+  -f compose.test.yaml `
+  down -v
+```
+
 ## Qualidade dos dados
 
 O MVP 0.4.0 introduziu as dimensões de completude, validade, unicidade e consistência temporal na ingestão de pacientes. O MVP 0.5.0 preserva os resultados dessas verificações no staging e no schema `quality`, vinculados à execução responsável.
@@ -838,13 +895,14 @@ A taxa de aceitação é calculada com base nos registros que passaram pelas reg
 
 ## Status do projeto
 
-**MVP 0.6.0 — API REST com FastAPI concluída.**
+**MVP 0.7.0 — Testes completos e banco exclusivo concluído.**
 
-A plataforma disponibiliza endpoints versionados e paginados para consultar
-pacientes, arquivos, execuções, staging, problemas de qualidade e lineage.
+A suíte utiliza um PostgreSQL isolado, aplica as migrações automaticamente,
+limpa os dados entre testes e substitui a sessão da API por uma dependência
+de testes.
 
-A API possui documentação OpenAPI, validação de parâmetros, respostas
-tipadas, tratamento de erros e execução por Docker Compose.
+O projeto possui testes unitários, de integração, API e migrações, além de
+cobertura de linhas e branches com limite mínimo configurado.
 
-**Próximo MVP:** `v0.7.0` — testes completos, banco exclusivo de testes e
-cobertura.
+**Próximo MVP:** `v0.8.0` — GitHub Actions, automação de qualidade,
+documentação final e preparação do portfólio.

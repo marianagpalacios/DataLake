@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "datalake-health-platform"
-version = "0.6.1"
+version = "0.7.0"
 description = "Plataforma educacional de engenharia de dados em saúde."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -19,8 +19,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "httpx>=0.28,<1.0",
+     "httpx>=0.28,<1.0",
     "pytest>=9,<10",
+    "pytest-cov>=7,<8",
 ]
 
 [tool.setuptools.packages.find]
@@ -28,8 +29,35 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra"
-markers = [
-    "integration: requer o PostgreSQL local em execução",
+addopts = [
+    "-ra",
+    "--strict-markers",
 ]
+markers = [
+    "unit: testes isolados sem dependências externas",
+    "integration: testes que utilizam PostgreSQL",
+    "api: testes do contrato HTTP da FastAPI",
+    "migration: testes de upgrade e downgrade do Alembic",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["datalake"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+precision = 2
+fail_under = 80
+exclude_also = [
+    "if TYPE_CHECKING:",
+    'if __name__ == .__main__.:',
+    "raise NotImplementedError",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
 

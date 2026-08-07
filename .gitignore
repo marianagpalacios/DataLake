@@ -40,3 +40,6 @@ data/processed/*
 
 data/rejected/*
 !data/rejected/.gitkeep
+
+.env.test
+coverage.xml

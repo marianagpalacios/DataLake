@@ -60,8 +60,34 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
+def do_run_migrations(connection) -> None:
+    """Configura e executa migrations em uma conexão existente."""
+
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        include_schemas=True,
+        include_name=include_name,
+        compare_type=True,
+        compare_server_default=True,
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
 def run_migrations_online() -> None:
-    """Executa as migrações diretamente no PostgreSQL."""
+    """Executa migrations no banco configurado ou injetado."""
+
+    injected_connection = config.attributes.get(
+        "connection"
+    )
+
+    if injected_connection is not None:
+        do_run_migrations(
+            injected_connection
+        )
+        return
 
     settings = get_settings()
 
@@ -71,17 +97,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
-            include_schemas=True,
-            include_name=include_name,
-            compare_type=True,
-            compare_server_default=True,
-        )
-
-        with context.begin_transaction():
-            context.run_migrations()
+        do_run_migrations(connection)
 
 
 if context.is_offline_mode():
