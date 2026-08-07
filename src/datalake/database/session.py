@@ -13,12 +13,16 @@ SessionFactory = sessionmaker(
     expire_on_commit=False,
 )
 
+SessionFactoryType = sessionmaker[Session]
+
 
 @contextmanager
-def session_scope() -> Iterator[Session]:
+def session_scope(
+    session_factory: SessionFactoryType = SessionFactory,
+) -> Iterator[Session]:
     """Fornece uma sessão com commit, rollback e fechamento."""
 
-    session = SessionFactory()
+    session = session_factory()
 
     try:
         yield session
