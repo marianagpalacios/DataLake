@@ -2,23 +2,21 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import delete
+from sqlalchemy.orm import Session, sessionmaker
 
-from datalake.database.session import (
-    SessionFactory,
-)
 from datalake.models.patient import Patient
 
 
 @pytest.mark.integration
 def test_patient_can_be_retrieved(
     api_client: TestClient,
+    test_session_factory: sessionmaker[Session],
 ) -> None:
     external_code = (
         f"API-{uuid4().hex[:12].upper()}"
     )
 
-    with SessionFactory.begin() as session:
+    with test_session_factory.begin() as session:
         patient = Patient(
             external_code=external_code,
             biological_sex="unknown",
@@ -29,33 +27,17 @@ def test_patient_can_be_retrieved(
 
         patient_id = patient.id
 
-    try:
-        response = api_client.get(
-            f"/api/v1/patients/{patient_id}"
-        )
+    response = api_client.get(
+        f"/api/v1/patients/{patient_id}"
+    )
 
-        assert response.status_code == 200
+    assert response.status_code == 200
 
-        body = response.json()
+    body = response.json()
 
-        assert body["id"] == patient_id
-        assert (
-            body["external_code"]
-            == external_code
-        )
-        assert (
-            body["biological_sex"]
-            == "unknown"
-        )
-
-    finally:
-        with SessionFactory.begin() as session:
-            session.execute(
-                delete(Patient).where(
-                    Patient.external_code
-                    == external_code
-                )
-            )
+    assert body["id"] == patient_id
+    assert body["external_code"] == external_code
+    assert body["biological_sex"] == "unknown"
 
 
 @pytest.mark.integration

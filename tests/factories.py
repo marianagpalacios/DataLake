@@ -61,6 +61,7 @@ def create_source_file(
     *,
     data_source: DataSource,
     sha256: str | None = None,
+    original_name: str = "patients.csv",
 ) -> SourceFile:
     file_hash = (
         sha256
@@ -70,7 +71,7 @@ def create_source_file(
     source_file = SourceFile(
         data_source_id=data_source.id,
         sha256=file_hash,
-        original_name="patients.csv",
+        original_name=original_name,
         stored_path="data/raw/patients.csv",
         size_bytes=128,
     )
@@ -91,11 +92,19 @@ def create_ingestion_run(
     rejected_count: int = 0,
     inserted_count: int = 1,
     existing_count: int = 0,
+    started_at: datetime | None = None,
+    error_message: str | None = None,
+    processed_file_path: str | None = None,
+    rejection_file_path: str | None = None,
 ) -> IngestionRun:
     run = IngestionRun(
         source_file_id=source_file.id,
         status=status,
         pipeline_version="0.5.0",
+        started_at=(
+            started_at
+            or datetime.now(timezone.utc)
+        ),
         finished_at=datetime.now(
             timezone.utc
         ),
@@ -113,6 +122,9 @@ def create_ingestion_run(
                 else 0
             )
         ),
+        error_message=error_message,
+        processed_file_path=processed_file_path,
+        rejection_file_path=rejection_file_path,
     )
 
     session.add(run)
@@ -127,10 +139,11 @@ def create_staged_record(
     run: IngestionRun,
     patient: Patient | None = None,
     validation_status: str = "valid",
+    source_row_number: int = 2,
 ) -> StagedPatientRecord:
     record = StagedPatientRecord(
         ingestion_run_id=run.id,
-        source_row_number=2,
+        source_row_number=source_row_number,
         raw_record={
             "external_code": (
                 patient.external_code
@@ -162,10 +175,11 @@ def create_quality_issue(
     *,
     staged_record: StagedPatientRecord,
     code: str = "invalid_date_format",
+    field: str = "birth_date",
 ) -> DataQualityIssueRecord:
     issue = DataQualityIssueRecord(
         staged_record_id=staged_record.id,
-        field="birth_date",
+        field=field,
         code=code,
         message=(
             "A data deve usar o formato "
