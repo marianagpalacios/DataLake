@@ -41,10 +41,7 @@ class PatientValidationResult:
 
     @property
     def received_count(self) -> int:
-        return (
-            len(self.valid_records)
-            + len(self.rejected_records)
-        )
+        return len(self.valid_records) + len(self.rejected_records)
 
     @property
     def valid_count(self) -> int:
@@ -60,8 +57,6 @@ class PatientValidationResult:
             return 0.0
 
         return round(
-            self.valid_count
-            / self.received_count
-            * 100,
+            self.valid_count / self.received_count * 100,
             2,
         )

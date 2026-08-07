@@ -6,9 +6,7 @@ from datalake.api.app import app
 def test_openapi_contains_expected_routes() -> None:
     client = TestClient(app)
 
-    response = client.get(
-        "/openapi.json"
-    )
+    response = client.get("/openapi.json")
 
     assert response.status_code == 200
 

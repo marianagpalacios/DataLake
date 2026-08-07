@@ -1,4 +1,3 @@
-import datalake.models
 from datalake.database.base import Base
 
 

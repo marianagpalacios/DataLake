@@ -9,7 +9,4 @@ class ResourceNotFoundError(Exception):
         self.resource = resource
         self.identifier = identifier
 
-        super().__init__(
-            f"{resource} não encontrado: "
-            f"{identifier}."
-        )
+        super().__init__(f"{resource} não encontrado: {identifier}.")

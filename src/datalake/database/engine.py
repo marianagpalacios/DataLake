@@ -2,7 +2,6 @@ from sqlalchemy import create_engine
 
 from datalake.config import get_settings
 
-
 settings = get_settings()
 
 engine = create_engine(

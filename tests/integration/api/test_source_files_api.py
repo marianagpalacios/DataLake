@@ -49,9 +49,7 @@ def test_source_files_support_pagination(
     api_client: TestClient,
     source_files_data: dict[str, object],
 ) -> None:
-    response = api_client.get(
-        "/api/v1/source-files?page=2&size=1"
-    )
+    response = api_client.get("/api/v1/source-files?page=2&size=1")
 
     assert response.status_code == 200
     body = response.json()
@@ -71,18 +69,12 @@ def test_source_files_support_filters(
     by_source = api_client.get(
         f"/api/v1/source-files?data_source_id={source_id}"
     ).json()
-    by_name = api_client.get(
-        "/api/v1/source-files?original_name=february"
-    ).json()
-    by_hash = api_client.get(
-        f"/api/v1/source-files?sha256={'a' * 8}"
-    ).json()
+    by_name = api_client.get("/api/v1/source-files?original_name=february").json()
+    by_hash = api_client.get(f"/api/v1/source-files?sha256={'a' * 8}").json()
 
     assert by_source["meta"]["total"] == 2
     assert by_name["meta"]["total"] == 1
-    assert by_name["items"][0]["original_name"] == (
-        "patients_february.csv"
-    )
+    assert by_name["items"][0]["original_name"] == ("patients_february.csv")
     assert by_hash["meta"]["total"] == 1
     assert by_hash["items"][0]["sha256"] == "a" * 64
 
@@ -93,9 +85,7 @@ def test_source_file_detail_hides_stored_path(
     source_files_data: dict[str, object],
 ) -> None:
     source_file_id = source_files_data["file_ids"][0]
-    response = api_client.get(
-        f"/api/v1/source-files/{source_file_id}"
-    )
+    response = api_client.get(f"/api/v1/source-files/{source_file_id}")
 
     assert response.status_code == 200
     assert "stored_path" not in response.json()
@@ -105,11 +95,7 @@ def test_source_file_detail_hides_stored_path(
 def test_missing_source_file_returns_404(
     api_client: TestClient,
 ) -> None:
-    response = api_client.get(
-        "/api/v1/source-files/999999"
-    )
+    response = api_client.get("/api/v1/source-files/999999")
 
     assert response.status_code == 404
-    assert response.json()["error"]["code"] == (
-        "resource_not_found"
-    )
+    assert response.json()["error"]["code"] == ("resource_not_found")

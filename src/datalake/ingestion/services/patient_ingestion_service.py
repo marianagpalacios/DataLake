@@ -9,7 +9,6 @@ from datalake.pipeline import (
     run_patient_etl,
 )
 
-
 PatientIngestionResult = PatientETLResult
 
 

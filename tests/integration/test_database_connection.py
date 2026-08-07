@@ -8,8 +8,6 @@ def test_database_connection(
     migrated_test_database: None,
 ) -> None:
     with test_engine.connect() as connection:
-        result = connection.scalar(
-            text("SELECT 1")
-        )
+        result = connection.scalar(text("SELECT 1"))
 
     assert result == 1

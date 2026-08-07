@@ -2,20 +2,18 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
-from alembic import command
 from alembic.config import Config
 from sqlalchemy import (
-    URL,
     Engine,
     create_engine,
     inspect,
     text,
 )
 
+from alembic import command
 from tests.conftest import (
     TestDatabaseSettings,
 )
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -25,22 +23,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 def test_migrations_upgrade_downgrade_and_upgrade(
     test_database_settings: TestDatabaseSettings,
 ) -> None:
-    database_name = (
-        f"datalake_migration_"
-        f"{uuid4().hex[:12]}"
-    )
+    database_name = f"datalake_migration_{uuid4().hex[:12]}"
 
-    admin_url = (
-        test_database_settings
-        .database_url
-        .set(database="postgres")
-    )
+    admin_url = test_database_settings.database_url.set(database="postgres")
 
-    target_url = (
-        test_database_settings
-        .database_url
-        .set(database=database_name)
-    )
+    target_url = test_database_settings.database_url.set(database=database_name)
 
     admin_engine = create_engine(
         admin_url,
@@ -51,19 +38,11 @@ def test_migrations_upgrade_downgrade_and_upgrade(
 
     try:
         with admin_engine.connect() as connection:
-            connection.execute(
-                text(
-                    f'CREATE DATABASE "{database_name}"'
-                )
-            )
+            connection.execute(text(f'CREATE DATABASE "{database_name}"'))
 
-        target_engine = create_engine(
-            target_url
-        )
+        target_engine = create_engine(target_url)
 
-        config = Config(
-            str(PROJECT_ROOT / "alembic.ini")
-        )
+        config = Config(str(PROJECT_ROOT / "alembic.ini"))
 
         config.set_main_option(
             "script_location",
@@ -71,9 +50,7 @@ def test_migrations_upgrade_downgrade_and_upgrade(
         )
 
         with target_engine.begin() as connection:
-            config.attributes[
-                "connection"
-            ] = connection
+            config.attributes["connection"] = connection
 
             command.upgrade(
                 config,
@@ -103,9 +80,7 @@ def test_migrations_upgrade_downgrade_and_upgrade(
         )
 
         with target_engine.begin() as connection:
-            config.attributes[
-                "connection"
-            ] = connection
+            config.attributes["connection"] = connection
 
             command.downgrade(
                 config,
@@ -120,9 +95,7 @@ def test_migrations_upgrade_downgrade_and_upgrade(
         )
 
         with target_engine.begin() as connection:
-            config.attributes[
-                "connection"
-            ] = connection
+            config.attributes["connection"] = connection
 
             command.upgrade(
                 config,
@@ -155,11 +128,6 @@ def test_migrations_upgrade_downgrade_and_upgrade(
                 },
             )
 
-            connection.execute(
-                text(
-                    f'DROP DATABASE IF EXISTS '
-                    f'"{database_name}"'
-                )
-            )
+            connection.execute(text(f'DROP DATABASE IF EXISTS "{database_name}"'))
 
         admin_engine.dispose()

@@ -32,7 +32,6 @@ from datalake.quality.reports import (
     write_rejected_patient_report,
 )
 
-
 SUCCESSFUL_STATUSES = (
     "completed",
     "completed_with_rejections",
@@ -62,19 +61,14 @@ def _get_or_create_data_source(
     session,
     source_name: str,
 ) -> DataSource:
-    source = session.scalar(
-        select(DataSource).where(
-            DataSource.name == source_name
-        )
-    )
+    source = session.scalar(select(DataSource).where(DataSource.name == source_name))
 
     if source is None:
         source = DataSource(
             name=source_name,
             source_type="csv",
             description=(
-                "Fonte registrada automaticamente "
-                "pelo pipeline de pacientes."
+                "Fonte registrada automaticamente pelo pipeline de pacientes."
             ),
         )
 
@@ -83,8 +77,7 @@ def _get_or_create_data_source(
 
     elif source.source_type != "csv":
         raise PatientETLError(
-            "A fonte informada já existe com um tipo "
-            "diferente de CSV."
+            "A fonte informada já existe com um tipo diferente de CSV."
         )
 
     return source
@@ -106,9 +99,7 @@ def _mark_run_failed(
                 return
 
             run.status = "failed"
-            run.finished_at = datetime.now(
-                timezone.utc
-            )
+            run.finished_at = datetime.now(timezone.utc)
             run.error_message = str(error)[:2000]
 
     except SQLAlchemyError:
@@ -141,10 +132,8 @@ def run_patient_etl(
 
         source_file = session.scalar(
             select(SourceFile).where(
-                SourceFile.data_source_id
-                == data_source.id,
-                SourceFile.sha256
-                == prepared.sha256,
+                SourceFile.data_source_id == data_source.id,
+                SourceFile.sha256 == prepared.sha256,
             )
         )
 
@@ -152,9 +141,7 @@ def run_patient_etl(
             source_file = SourceFile(
                 data_source_id=data_source.id,
                 sha256=prepared.sha256,
-                original_name=(
-                    prepared.original_path.name
-                ),
+                original_name=(prepared.original_path.name),
                 stored_path=str(prepared.raw_path),
                 size_bytes=prepared.size_bytes,
             )
@@ -165,11 +152,8 @@ def run_patient_etl(
         previous_run = session.scalar(
             select(IngestionRun)
             .where(
-                IngestionRun.source_file_id
-                == source_file.id,
-                IngestionRun.status.in_(
-                    SUCCESSFUL_STATUSES
-                ),
+                IngestionRun.source_file_id == source_file.id,
+                IngestionRun.status.in_(SUCCESSFUL_STATUSES),
             )
             .order_by(
                 IngestionRun.finished_at.desc(),
@@ -187,18 +171,12 @@ def run_patient_etl(
                 finished_at=datetime.now(timezone.utc),
                 received_count=previous_run.received_count,
                 valid_count=previous_run.valid_count,
-                rejected_count=(
-                    previous_run.rejected_count
-                ),
+                rejected_count=(previous_run.rejected_count),
                 inserted_count=previous_run.inserted_count,
                 existing_count=previous_run.existing_count,
                 acceptance_rate=previous_run.acceptance_rate,
-                processed_file_path=(
-                    previous_run.processed_file_path
-                ),
-                rejection_file_path=(
-                    previous_run.rejection_file_path
-                ),
+                processed_file_path=(previous_run.processed_file_path),
+                rejection_file_path=(previous_run.rejection_file_path),
             )
 
             session.add(skipped_run)
@@ -225,16 +203,11 @@ def run_patient_etl(
                 rejected_count=skipped_run.rejected_count,
                 inserted_count=0,
                 existing_count=skipped_run.valid_count,
-                acceptance_rate=float(
-                    skipped_run.acceptance_rate
-                ),
+                acceptance_rate=float(skipped_run.acceptance_rate),
                 warnings=(
-                    "O arquivo já havia sido processado "
-                    "com sucesso e foi ignorado.",
+                    "O arquivo já havia sido processado com sucesso e foi ignorado.",
                 ),
-                duplicate_of_run_uuid=(
-                    previous_run.run_uuid
-                ),
+                duplicate_of_run_uuid=(previous_run.run_uuid),
             )
 
         run = IngestionRun(
@@ -253,13 +226,9 @@ def run_patient_etl(
     assert run_uuid is not None
 
     try:
-        dataframe = read_csv_file(
-            prepared.raw_path
-        )
+        dataframe = read_csv_file(prepared.raw_path)
 
-        validation = validate_patient_dataframe(
-            dataframe
-        )
+        validation = validate_patient_dataframe(dataframe)
 
         processed_file = write_processed_patient_file(
             valid_records=validation.valid_records,
@@ -268,14 +237,10 @@ def run_patient_etl(
             output_dir=processed_dir,
         )
 
-        rejection_file = (
-            write_rejected_patient_report(
-                rejected_records=(
-                    validation.rejected_records
-                ),
-                source_file=prepared.original_path,
-                output_dir=rejected_dir,
-            )
+        rejection_file = write_rejected_patient_report(
+            rejected_records=(validation.rejected_records),
+            source_file=prepared.original_path,
+            output_dir=rejected_dir,
         )
 
         with session_scope(session_factory) as session:
@@ -285,16 +250,10 @@ def run_patient_etl(
             )
 
             if run is None:
-                raise PatientETLError(
-                    "A execução registrada não foi encontrada."
-                )
+                raise PatientETLError("A execução registrada não foi encontrada.")
 
             external_codes = [
-                str(
-                    validated.normalized_record[
-                        "external_code"
-                    ]
-                )
+                str(validated.normalized_record["external_code"])
                 for validated in validation.valid_records
             ]
 
@@ -303,34 +262,23 @@ def run_patient_etl(
             if external_codes:
                 existing_patients = list(
                     session.scalars(
-                        select(Patient).where(
-                            Patient.external_code.in_(
-                                external_codes
-                            )
-                        )
+                        select(Patient).where(Patient.external_code.in_(external_codes))
                     )
                 )
 
             patients_by_code = {
-                patient.external_code: patient
-                for patient in existing_patients
+                patient.external_code: patient for patient in existing_patients
             }
 
             inserted_count = 0
 
             for validated in validation.valid_records:
-                code = str(
-                    validated.normalized_record[
-                        "external_code"
-                    ]
-                )
+                code = str(validated.normalized_record["external_code"])
 
                 if code in patients_by_code:
                     continue
 
-                patient = map_patient_record(
-                    validated.normalized_record
-                )
+                patient = map_patient_record(validated.normalized_record)
 
                 session.add(patient)
                 patients_by_code[code] = patient
@@ -345,41 +293,23 @@ def run_patient_etl(
                 session.add(
                     StagedPatientRecord(
                         ingestion_run_id=run.id,
-                        source_row_number=(
-                            validated.row_number
-                        ),
-                        raw_record=dict(
-                            validated.raw_record
-                        ),
+                        source_row_number=(validated.row_number),
+                        raw_record=dict(validated.raw_record),
                         normalized_external_code=code,
-                        normalized_birth_date=(
-                            normalized.get("birth_date")
-                        ),
-                        normalized_biological_sex=(
-                            normalized.get(
-                                "biological_sex"
-                            )
-                        ),
+                        normalized_birth_date=(normalized.get("birth_date")),
+                        normalized_biological_sex=(normalized.get("biological_sex")),
                         validation_status="valid",
-                        patient_id=(
-                            patients_by_code[code].id
-                        ),
+                        patient_id=(patients_by_code[code].id),
                     )
                 )
 
-            rejected_pairs: list[
-                tuple[object, StagedPatientRecord]
-            ] = []
+            rejected_pairs: list[tuple[object, StagedPatientRecord]] = []
 
             for rejected in validation.rejected_records:
                 staged = StagedPatientRecord(
                     ingestion_run_id=run.id,
-                    source_row_number=(
-                        rejected.row_number
-                    ),
-                    raw_record=dict(
-                        rejected.raw_record
-                    ),
+                    source_row_number=(rejected.row_number),
+                    raw_record=dict(rejected.raw_record),
                     validation_status="rejected",
                 )
 
@@ -413,18 +343,12 @@ def run_patient_etl(
             run.rejected_count = validation.rejected_count
             run.inserted_count = inserted_count
             run.existing_count = existing_count
-            run.acceptance_rate = Decimal(
-                str(validation.acceptance_rate)
-            )
+            run.acceptance_rate = Decimal(str(validation.acceptance_rate))
             run.processed_file_path = (
-                str(processed_file)
-                if processed_file is not None
-                else None
+                str(processed_file) if processed_file is not None else None
             )
             run.rejection_file_path = (
-                str(rejection_file)
-                if rejection_file is not None
-                else None
+                str(rejection_file) if rejection_file is not None else None
             )
 
         return PatientETLResult(
@@ -455,6 +379,4 @@ def run_patient_etl(
         if isinstance(error, PatientETLError):
             raise
 
-        raise PatientETLError(
-            "O pipeline ETL de pacientes falhou."
-        ) from error
+        raise PatientETLError("O pipeline ETL de pacientes falhou.") from error

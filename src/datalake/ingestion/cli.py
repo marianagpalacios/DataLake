@@ -33,10 +33,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "file_path",
         type=Path,
-        help=(
-            "Caminho do arquivo CSV de "
-            "pacientes."
-        ),
+        help=("Caminho do arquivo CSV de pacientes."),
     )
 
     parser.add_argument(
@@ -69,10 +66,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--force",
         action="store_true",
-        help=(
-            "Reprocessa o arquivo mesmo quando seu "
-            "hash já tiver sido concluído."
-        ),
+        help=("Reprocessa o arquivo mesmo quando seu hash já tiver sido concluído."),
     )
 
     return parser
@@ -102,8 +96,7 @@ def main() -> None:
         PatientETLError,
     ) as error:
         print(
-            f"Erro durante a ingestão:\n"
-            f"{error}",
+            f"Erro durante a ingestão:\n{error}",
             file=sys.stderr,
         )
 
@@ -119,56 +112,27 @@ def main() -> None:
     print(f"Camada raw: {result.raw_file}")
 
     if result.processed_file is not None:
-        print(
-            "Arquivo processado: "
-            f"{result.processed_file}"
-        )
+        print(f"Arquivo processado: {result.processed_file}")
 
     if result.rejection_file is not None:
-        print(
-            "Relatório de rejeições: "
-            f"{result.rejection_file}"
-        )
+        print(f"Relatório de rejeições: {result.rejection_file}")
 
     if result.duplicate_of_run_uuid is not None:
-        print(
-            "Execução original: "
-            f"{result.duplicate_of_run_uuid}"
-        )
+        print(f"Execução original: {result.duplicate_of_run_uuid}")
 
-    print(
-        "Registros recebidos: "
-        f"{result.received_count}"
-    )
+    print(f"Registros recebidos: {result.received_count}")
 
-    print(
-        "Registros válidos: "
-        f"{result.valid_count}"
-    )
+    print(f"Registros válidos: {result.valid_count}")
 
-    print(
-        "Registros rejeitados: "
-        f"{result.rejected_count}"
-    )
+    print(f"Registros rejeitados: {result.rejected_count}")
 
-    print(
-        "Registros inseridos: "
-        f"{result.inserted_count}"
-    )
+    print(f"Registros inseridos: {result.inserted_count}")
 
-    print(
-        "Registros já existentes: "
-        f"{result.existing_count}"
-    )
+    print(f"Registros já existentes: {result.existing_count}")
 
-    print(
-        "Taxa de aceitação: "
-        f"{result.acceptance_rate:.2f}%"
-    )
+    print(f"Taxa de aceitação: {result.acceptance_rate:.2f}%")
 
-    print(
-        f"Avisos: {len(result.warnings)}"
-    )
+    print(f"Avisos: {len(result.warnings)}")
 
     for warning in result.warnings:
         print(f"- {warning}")

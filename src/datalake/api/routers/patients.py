@@ -19,7 +19,6 @@ from datalake.api.schemas import (
     PatientRead,
 )
 
-
 router = APIRouter(
     prefix="/patients",
     tags=["patients"],
@@ -50,10 +49,7 @@ def read_patients(
         biological_sex=biological_sex,
     )
 
-    items = [
-        PatientRead.model_validate(patient)
-        for patient in patients
-    ]
+    items = [PatientRead.model_validate(patient) for patient in patients]
 
     return build_page(
         items,
@@ -76,6 +72,4 @@ def read_patient(
         patient_id,
     )
 
-    return PatientRead.model_validate(
-        patient
-    )
+    return PatientRead.model_validate(patient)

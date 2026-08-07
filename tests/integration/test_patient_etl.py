@@ -29,24 +29,16 @@ def _cleanup(
 ) -> None:
     with session_factory.begin() as session:
         source = session.scalar(
-            select(DataSource).where(
-                DataSource.name == source_name
-            )
+            select(DataSource).where(DataSource.name == source_name)
         )
 
         if source is not None:
             session.execute(
-                delete(SourceFile).where(
-                    SourceFile.data_source_id == source.id
-                )
+                delete(SourceFile).where(SourceFile.data_source_id == source.id)
             )
 
         session.execute(
-            delete(Patient).where(
-                Patient.external_code.like(
-                    f"{code_prefix}%"
-                )
-            )
+            delete(Patient).where(Patient.external_code.like(f"{code_prefix}%"))
         )
 
         if source is not None:
@@ -86,9 +78,7 @@ def test_patient_etl_persists_complete_lineage(
 
         with test_session_factory() as session:
             run = session.scalar(
-                select(IngestionRun).where(
-                    IngestionRun.run_uuid == result.run_uuid
-                )
+                select(IngestionRun).where(IngestionRun.run_uuid == result.run_uuid)
             )
             assert run is not None
             assert run.status == "completed_with_rejections"
@@ -98,28 +88,18 @@ def test_patient_etl_persists_complete_lineage(
             staged_count = session.scalar(
                 select(func.count())
                 .select_from(StagedPatientRecord)
-                .where(
-                    StagedPatientRecord.ingestion_run_id
-                    == run.id
-                )
+                .where(StagedPatientRecord.ingestion_run_id == run.id)
             )
             issue_count = session.scalar(
                 select(func.count())
                 .select_from(DataQualityIssueRecord)
                 .join(StagedPatientRecord)
-                .where(
-                    StagedPatientRecord.ingestion_run_id
-                    == run.id
-                )
+                .where(StagedPatientRecord.ingestion_run_id == run.id)
             )
             patient_count = session.scalar(
                 select(func.count())
                 .select_from(Patient)
-                .where(
-                    Patient.external_code.like(
-                        f"{code_prefix}%"
-                    )
-                )
+                .where(Patient.external_code.like(f"{code_prefix}%"))
             )
 
         assert staged_count == 3
@@ -184,10 +164,7 @@ def test_patient_etl_skips_duplicate_file(
                 session.scalar(
                     select(func.count())
                     .select_from(StagedPatientRecord)
-                    .where(
-                        StagedPatientRecord.ingestion_run_id
-                        == run.id
-                    )
+                    .where(StagedPatientRecord.ingestion_run_id == run.id)
                 )
                 for run in runs
             ]
@@ -255,11 +232,7 @@ def test_patient_etl_force_reprocesses_file(
             patient_count = session.scalar(
                 select(func.count())
                 .select_from(Patient)
-                .where(
-                    Patient.external_code.like(
-                        f"{code_prefix}%"
-                    )
-                )
+                .where(Patient.external_code.like(f"{code_prefix}%"))
             )
 
         assert staged_count == 4
@@ -281,8 +254,7 @@ def test_patient_etl_marks_structural_failure(
     source_name, code_prefix = _test_identity()
     file_path = tmp_path / "patients.csv"
     file_path.write_text(
-        "external_code,birth_date\n"
-        f"{code_prefix}-001,1995-04-10\n",
+        f"external_code,birth_date\n{code_prefix}-001,1995-04-10\n",
         encoding="utf-8",
     )
 
@@ -309,19 +281,12 @@ def test_patient_etl_marks_structural_failure(
             staged_count = session.scalar(
                 select(func.count())
                 .select_from(StagedPatientRecord)
-                .where(
-                    StagedPatientRecord.ingestion_run_id
-                    == run.id
-                )
+                .where(StagedPatientRecord.ingestion_run_id == run.id)
             )
             patient_count = session.scalar(
                 select(func.count())
                 .select_from(Patient)
-                .where(
-                    Patient.external_code.like(
-                        f"{code_prefix}%"
-                    )
-                )
+                .where(Patient.external_code.like(f"{code_prefix}%"))
             )
 
         assert run.status == "failed"

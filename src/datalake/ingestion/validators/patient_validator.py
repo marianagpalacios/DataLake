@@ -13,7 +13,6 @@ from datalake.quality.models import (
     ValidatedPatientRecord,
 )
 
-
 REQUIRED_PATIENT_COLUMNS = frozenset(
     {
         "external_code",
@@ -51,9 +50,7 @@ def _parse_birth_date(value: str) -> date:
     ).date()
 
     if parsed.isoformat() != value:
-        raise ValueError(
-            "Formato de data não canônico."
-        )
+        raise ValueError("Formato de data não canônico.")
 
     return parsed
 
@@ -64,45 +61,23 @@ def validate_patient_dataframe(
 ) -> PatientValidationResult:
     """Separa registros válidos e rejeitados."""
 
-    missing_columns = (
-        REQUIRED_PATIENT_COLUMNS.difference(
-            dataframe.columns
-        )
-    )
+    missing_columns = REQUIRED_PATIENT_COLUMNS.difference(dataframe.columns)
 
     if missing_columns:
-        missing = ", ".join(
-            sorted(missing_columns)
-        )
+        missing = ", ".join(sorted(missing_columns))
 
-        raise PatientValidationError(
-            [
-                "Colunas obrigatórias ausentes: "
-                f"{missing}."
-            ]
-        )
+        raise PatientValidationError([f"Colunas obrigatórias ausentes: {missing}."])
 
     if dataframe.empty:
-        raise PatientValidationError(
-            [
-                "O arquivo não possui registros "
-                "de pacientes."
-            ]
-        )
+        raise PatientValidationError(["O arquivo não possui registros de pacientes."])
 
     reference_date = today or date.today()
     warnings: list[str] = []
 
-    extra_columns = set(
-        dataframe.columns
-    ).difference(
-        REQUIRED_PATIENT_COLUMNS
-    )
+    extra_columns = set(dataframe.columns).difference(REQUIRED_PATIENT_COLUMNS)
 
     if extra_columns:
-        extras = ", ".join(
-            sorted(extra_columns)
-        )
+        extras = ", ".join(sorted(extra_columns))
 
         warnings.append(
             "Colunas adicionais foram preservadas "
@@ -111,31 +86,20 @@ def validate_patient_dataframe(
         )
 
     normalized_codes = [
-        _as_text(value).strip()
-        for value
-        in dataframe["external_code"].tolist()
+        _as_text(value).strip() for value in dataframe["external_code"].tolist()
     ]
 
-    code_counts = Counter(
-        code
-        for code in normalized_codes
-        if code
-    )
+    code_counts = Counter(code for code in normalized_codes if code)
 
     valid_records: list[ValidatedPatientRecord] = []
 
-    rejected_records: list[
-        RejectedPatientRecord
-    ] = []
+    rejected_records: list[RejectedPatientRecord] = []
 
     for position, (_, row) in enumerate(
         dataframe.iterrows(),
         start=2,
     ):
-        raw_record = {
-            column: _as_text(row[column])
-            for column in dataframe.columns
-        }
+        raw_record = {column: _as_text(row[column]) for column in dataframe.columns}
 
         issues: list[DataQualityIssue] = []
 
@@ -155,10 +119,7 @@ def validate_patient_dataframe(
                     row_number=position,
                     field="external_code",
                     code="required_value_missing",
-                    message=(
-                        "O código externo é "
-                        "obrigatório."
-                    ),
+                    message=("O código externo é obrigatório."),
                     raw_value=raw_code,
                 )
             )
@@ -169,119 +130,72 @@ def validate_patient_dataframe(
                     row_number=position,
                     field="external_code",
                     code="duplicate_in_file",
-                    message=(
-                        "O código externo está "
-                        "duplicado dentro do arquivo."
-                    ),
+                    message=("O código externo está duplicado dentro do arquivo."),
                     raw_value=raw_code,
                 )
             )
 
-        raw_birth_date = raw_record[
-            "birth_date"
-        ]
+        raw_birth_date = raw_record["birth_date"]
 
-        normalized_birth_date = (
-            raw_birth_date.strip()
-        )
+        normalized_birth_date = raw_birth_date.strip()
 
         birth_date_value: date | None = None
 
-        if (
-            raw_birth_date
-            != normalized_birth_date
-        ):
+        if raw_birth_date != normalized_birth_date:
             warnings.append(
-                "Espaços externos foram removidos "
-                "de `birth_date` na linha "
-                f"{position}."
+                f"Espaços externos foram removidos de `birth_date` na linha {position}."
             )
 
         if normalized_birth_date:
             try:
-                birth_date_value = (
-                    _parse_birth_date(
-                        normalized_birth_date
-                    )
-                )
+                birth_date_value = _parse_birth_date(normalized_birth_date)
 
             except ValueError:
                 issues.append(
                     DataQualityIssue(
                         row_number=position,
                         field="birth_date",
-                        code=(
-                            "invalid_date_format"
-                        ),
-                        message=(
-                            "A data deve usar o "
-                            "formato AAAA-MM-DD."
-                        ),
+                        code=("invalid_date_format"),
+                        message=("A data deve usar o formato AAAA-MM-DD."),
                         raw_value=raw_birth_date,
                     )
                 )
 
             else:
-                if (
-                    birth_date_value
-                    > reference_date
-                ):
+                if birth_date_value > reference_date:
                     issues.append(
                         DataQualityIssue(
                             row_number=position,
                             field="birth_date",
-                            code=(
-                                "future_birth_date"
-                            ),
-                            message=(
-                                "A data de nascimento "
-                                "não pode estar no "
-                                "futuro."
-                            ),
-                            raw_value=(
-                                raw_birth_date
-                            ),
+                            code=("future_birth_date"),
+                            message=("A data de nascimento não pode estar no futuro."),
+                            raw_value=(raw_birth_date),
                         )
                     )
 
-        raw_sex = raw_record[
-            "biological_sex"
-        ]
+        raw_sex = raw_record["biological_sex"]
 
         stripped_sex = raw_sex.strip()
-        biological_sex = (
-            stripped_sex.lower()
-        )
+        biological_sex = stripped_sex.lower()
 
         if raw_sex != biological_sex:
             warnings.append(
-                "O valor de `biological_sex` "
-                "foi normalizado na linha "
-                f"{position}."
+                f"O valor de `biological_sex` foi normalizado na linha {position}."
             )
 
-        biological_sex_value = (
-            biological_sex
-            if biological_sex
-            else None
-        )
+        biological_sex_value = biological_sex if biological_sex else None
 
         if (
             biological_sex_value is not None
-            and biological_sex_value
-            not in ALLOWED_BIOLOGICAL_SEX
+            and biological_sex_value not in ALLOWED_BIOLOGICAL_SEX
         ):
             issues.append(
                 DataQualityIssue(
                     row_number=position,
                     field="biological_sex",
-                    code=(
-                        "invalid_biological_sex"
-                    ),
+                    code=("invalid_biological_sex"),
                     message=(
-                        "O valor de sexo biológico "
-                        "não pertence à lista "
-                        "permitida."
+                        "O valor de sexo biológico não pertence à lista permitida."
                     ),
                     raw_value=raw_sex,
                 )
@@ -312,8 +226,6 @@ def validate_patient_dataframe(
 
     return PatientValidationResult(
         valid_records=tuple(valid_records),
-        rejected_records=tuple(
-            rejected_records
-        ),
+        rejected_records=tuple(rejected_records),
         warnings=tuple(warnings),
     )

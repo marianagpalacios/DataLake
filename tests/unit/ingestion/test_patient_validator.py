@@ -104,9 +104,9 @@ def test_validator_rejects_blank_external_code() -> None:
 
     assert result.valid_records == ()
     assert len(result.rejected_records) == 1
-    assert {
-        issue.code for issue in result.rejected_records[0].issues
-    } == {"required_value_missing"}
+    assert {issue.code for issue in result.rejected_records[0].issues} == {
+        "required_value_missing"
+    }
     assert result.received_count == 1
     assert result.valid_count == 0
     assert result.rejected_count == 1
@@ -157,9 +157,9 @@ def test_validator_rejects_invalid_date_format() -> None:
     result = validate_patient_dataframe(dataframe)
 
     assert result.valid_records == ()
-    assert {
-        issue.code for issue in result.rejected_records[0].issues
-    } == {"invalid_date_format"}
+    assert {issue.code for issue in result.rejected_records[0].issues} == {
+        "invalid_date_format"
+    }
     assert result.received_count == 1
     assert result.valid_count == 0
     assert result.rejected_count == 1
@@ -180,9 +180,9 @@ def test_validator_rejects_future_birth_date() -> None:
     result = validate_patient_dataframe(dataframe, today=date(2025, 1, 1))
 
     assert result.valid_records == ()
-    assert {
-        issue.code for issue in result.rejected_records[0].issues
-    } == {"future_birth_date"}
+    assert {issue.code for issue in result.rejected_records[0].issues} == {
+        "future_birth_date"
+    }
     assert result.received_count == 1
     assert result.valid_count == 0
     assert result.rejected_count == 1
@@ -203,9 +203,9 @@ def test_validator_rejects_invalid_biological_sex() -> None:
     result = validate_patient_dataframe(dataframe)
 
     assert result.valid_records == ()
-    assert {
-        issue.code for issue in result.rejected_records[0].issues
-    } == {"invalid_biological_sex"}
+    assert {issue.code for issue in result.rejected_records[0].issues} == {
+        "invalid_biological_sex"
+    }
     assert result.received_count == 1
     assert result.valid_count == 0
     assert result.rejected_count == 1
@@ -232,14 +232,11 @@ def test_validator_separates_valid_and_invalid_records() -> None:
 
     assert len(result.valid_records) == 1
     assert result.valid_records[0].row_number == 2
-    assert (
-        result.valid_records[0].normalized_record["external_code"]
-        == "PAT-VALID"
-    )
+    assert result.valid_records[0].normalized_record["external_code"] == "PAT-VALID"
     assert len(result.rejected_records) == 1
-    assert {
-        issue.code for issue in result.rejected_records[0].issues
-    } == {"required_value_missing"}
+    assert {issue.code for issue in result.rejected_records[0].issues} == {
+        "required_value_missing"
+    }
     assert result.received_count == 2
     assert result.valid_count == 1
     assert result.rejected_count == 1

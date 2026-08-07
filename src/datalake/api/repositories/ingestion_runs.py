@@ -33,38 +33,20 @@ def list_ingestion_runs(
     conditions = []
 
     if status:
-        conditions.append(
-            IngestionRun.status == status
-        )
+        conditions.append(IngestionRun.status == status)
 
     if source_file_id is not None:
-        conditions.append(
-            IngestionRun.source_file_id
-            == source_file_id
-        )
+        conditions.append(IngestionRun.source_file_id == source_file_id)
 
     if started_from is not None:
-        conditions.append(
-            IngestionRun.started_at
-            >= started_from
-        )
+        conditions.append(IngestionRun.started_at >= started_from)
 
     if started_to is not None:
-        conditions.append(
-            IngestionRun.started_at
-            <= started_to
-        )
+        conditions.append(IngestionRun.started_at <= started_to)
 
-    count_statement = (
-        select(func.count())
-        .select_from(IngestionRun)
-        .where(*conditions)
-    )
+    count_statement = select(func.count()).select_from(IngestionRun).where(*conditions)
 
-    total = (
-        session.scalar(count_statement)
-        or 0
-    )
+    total = session.scalar(count_statement) or 0
 
     statement = (
         select(IngestionRun)
@@ -74,9 +56,7 @@ def list_ingestion_runs(
         .limit(limit)
     )
 
-    runs = list(
-        session.scalars(statement)
-    )
+    runs = list(session.scalars(statement))
 
     return runs, total
 
@@ -85,11 +65,7 @@ def get_ingestion_run(
     session: Session,
     run_uuid: UUID,
 ) -> IngestionRun:
-    statement = select(
-        IngestionRun
-    ).where(
-        IngestionRun.run_uuid == run_uuid
-    )
+    statement = select(IngestionRun).where(IngestionRun.run_uuid == run_uuid)
 
     run = session.scalar(statement)
 
@@ -120,45 +96,33 @@ def list_staged_records(
     ]
 
     if validation_status:
-        conditions.append(
-            StagedPatientRecord.validation_status
-            == validation_status
-        )
+        conditions.append(StagedPatientRecord.validation_status == validation_status)
 
     count_statement = (
         select(func.count())
         .select_from(StagedPatientRecord)
         .join(
             IngestionRun,
-            IngestionRun.id
-            == StagedPatientRecord.ingestion_run_id,
+            IngestionRun.id == StagedPatientRecord.ingestion_run_id,
         )
         .where(*conditions)
     )
 
-    total = (
-        session.scalar(count_statement)
-        or 0
-    )
+    total = session.scalar(count_statement) or 0
 
     statement = (
         select(StagedPatientRecord)
         .join(
             IngestionRun,
-            IngestionRun.id
-            == StagedPatientRecord.ingestion_run_id,
+            IngestionRun.id == StagedPatientRecord.ingestion_run_id,
         )
         .where(*conditions)
-        .order_by(
-            StagedPatientRecord.source_row_number
-        )
+        .order_by(StagedPatientRecord.source_row_number)
         .offset(offset)
         .limit(limit)
     )
 
-    records = list(
-        session.scalars(statement)
-    )
+    records = list(session.scalars(statement))
 
     return records, total
 
@@ -185,61 +149,44 @@ def list_quality_issues(
     ]
 
     if field:
-        conditions.append(
-            DataQualityIssueRecord.field
-            == field
-        )
+        conditions.append(DataQualityIssueRecord.field == field)
 
     if code:
-        conditions.append(
-            DataQualityIssueRecord.code
-            == code
-        )
+        conditions.append(DataQualityIssueRecord.code == code)
 
     count_statement = (
         select(func.count())
         .select_from(DataQualityIssueRecord)
         .join(
             StagedPatientRecord,
-            StagedPatientRecord.id
-            == DataQualityIssueRecord.staged_record_id,
+            StagedPatientRecord.id == DataQualityIssueRecord.staged_record_id,
         )
         .join(
             IngestionRun,
-            IngestionRun.id
-            == StagedPatientRecord.ingestion_run_id,
+            IngestionRun.id == StagedPatientRecord.ingestion_run_id,
         )
         .where(*conditions)
     )
 
-    total = (
-        session.scalar(count_statement)
-        or 0
-    )
+    total = session.scalar(count_statement) or 0
 
     statement = (
         select(DataQualityIssueRecord)
         .join(
             StagedPatientRecord,
-            StagedPatientRecord.id
-            == DataQualityIssueRecord.staged_record_id,
+            StagedPatientRecord.id == DataQualityIssueRecord.staged_record_id,
         )
         .join(
             IngestionRun,
-            IngestionRun.id
-            == StagedPatientRecord.ingestion_run_id,
+            IngestionRun.id == StagedPatientRecord.ingestion_run_id,
         )
         .where(*conditions)
-        .order_by(
-            DataQualityIssueRecord.id
-        )
+        .order_by(DataQualityIssueRecord.id)
         .offset(offset)
         .limit(limit)
     )
 
-    issues = list(
-        session.scalars(statement)
-    )
+    issues = list(session.scalars(statement))
 
     return issues, total
 
@@ -251,22 +198,13 @@ def get_staged_record_lineage(
     statement = (
         select(StagedPatientRecord)
         .options(
-            joinedload(
-                StagedPatientRecord.ingestion_run
-            ).joinedload(
+            joinedload(StagedPatientRecord.ingestion_run).joinedload(
                 IngestionRun.source_file
             ),
-            joinedload(
-                StagedPatientRecord.patient
-            ),
-            selectinload(
-                StagedPatientRecord.quality_issues
-            ),
+            joinedload(StagedPatientRecord.patient),
+            selectinload(StagedPatientRecord.quality_issues),
         )
-        .where(
-            StagedPatientRecord.id
-            == record_id
-        )
+        .where(StagedPatientRecord.id == record_id)
     )
 
     record = session.scalar(statement)

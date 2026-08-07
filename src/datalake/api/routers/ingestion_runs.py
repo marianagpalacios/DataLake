@@ -26,7 +26,6 @@ from datalake.api.schemas import (
     ValidationStatus,
 )
 
-
 router = APIRouter(
     prefix="/ingestion-runs",
     tags=["ingestion-runs"],
@@ -55,10 +54,7 @@ def read_ingestion_runs(
         started_to=started_to,
     )
 
-    items = [
-        IngestionRunRead.model_validate(run)
-        for run in runs
-    ]
+    items = [IngestionRunRead.model_validate(run) for run in runs]
 
     return build_page(
         items,
@@ -81,23 +77,18 @@ def read_ingestion_run(
         run_uuid,
     )
 
-    return IngestionRunRead.model_validate(
-        run
-    )
+    return IngestionRunRead.model_validate(run)
 
 
 @router.get(
     "/{run_uuid}/records",
-    response_model=Page[
-        StagedPatientRecordRead
-    ],
+    response_model=Page[StagedPatientRecordRead],
 )
 def read_run_records(
     run_uuid: UUID,
     session: SessionDep,
     pagination: PaginationDep,
-    validation_status: ValidationStatus
-    | None = None,
+    validation_status: ValidationStatus | None = None,
 ) -> Page[StagedPatientRecordRead]:
     records, total = list_staged_records(
         session,
@@ -107,12 +98,7 @@ def read_run_records(
         validation_status=validation_status,
     )
 
-    items = [
-        StagedPatientRecordRead.model_validate(
-            record
-        )
-        for record in records
-    ]
+    items = [StagedPatientRecordRead.model_validate(record) for record in records]
 
     return build_page(
         items,
@@ -124,9 +110,7 @@ def read_run_records(
 
 @router.get(
     "/{run_uuid}/quality-issues",
-    response_model=Page[
-        DataQualityIssueRead
-    ],
+    response_model=Page[DataQualityIssueRead],
 )
 def read_run_quality_issues(
     run_uuid: UUID,
@@ -156,12 +140,7 @@ def read_run_quality_issues(
         code=code,
     )
 
-    items = [
-        DataQualityIssueRead.model_validate(
-            issue
-        )
-        for issue in issues
-    ]
+    items = [DataQualityIssueRead.model_validate(issue) for issue in issues]
 
     return build_page(
         items,

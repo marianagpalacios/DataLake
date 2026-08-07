@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from datalake.database.engine import engine
 
-
 SessionFactory = sessionmaker(
     bind=engine,
     class_=Session,

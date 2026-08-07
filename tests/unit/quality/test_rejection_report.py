@@ -73,6 +73,4 @@ def test_report_contains_issue_details(tmp_path: Path) -> None:
     assert row["source_row_number"] == "3"
     assert row["error_codes"] == "invalid_date_format"
     assert row["error_fields"] == "birth_date"
-    assert row["error_messages"] == (
-        "A data deve usar o formato AAAA-MM-DD."
-    )
+    assert row["error_messages"] == ("A data deve usar o formato AAAA-MM-DD.")

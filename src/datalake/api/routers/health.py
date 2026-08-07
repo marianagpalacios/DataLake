@@ -9,16 +9,13 @@ from datalake.api.schemas import (
     ReadinessResponse,
 )
 
-
 router = APIRouter(
     tags=["health"],
 )
 
 
 def get_project_version() -> str:
-    return version(
-        "datalake-health-platform"
-    )
+    return version("datalake-health-platform")
 
 
 @router.get(
@@ -40,14 +37,10 @@ def liveness() -> LivenessResponse:
 def readiness(
     session: SessionDep,
 ) -> ReadinessResponse:
-    result = session.scalar(
-        text("SELECT 1")
-    )
+    result = session.scalar(text("SELECT 1"))
 
     if result != 1:
-        raise RuntimeError(
-            "Resposta inesperada do banco."
-        )
+        raise RuntimeError("Resposta inesperada do banco.")
 
     return ReadinessResponse(
         status="ready",

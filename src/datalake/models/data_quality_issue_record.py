@@ -21,9 +21,7 @@ class DataQualityIssueRecord(TimestampMixin, Base):
 
     __tablename__ = "data_quality_issues"
 
-    __table_args__ = (
-        {"schema": "quality"},
-    )
+    __table_args__ = ({"schema": "quality"},)
 
     id: Mapped[int] = mapped_column(
         BigInteger,

@@ -12,9 +12,7 @@ def register_exception_handlers(
 ) -> None:
     """Registra handlers globais da API."""
 
-    @app.exception_handler(
-        ResourceNotFoundError
-    )
+    @app.exception_handler(ResourceNotFoundError)
     def handle_not_found(
         request: Request,
         error: ResourceNotFoundError,
@@ -39,10 +37,7 @@ def register_exception_handlers(
             content={
                 "error": {
                     "code": "database_unavailable",
-                    "message": (
-                        "O banco de dados não está "
-                        "disponível."
-                    ),
+                    "message": ("O banco de dados não está disponível."),
                 }
             },
         )

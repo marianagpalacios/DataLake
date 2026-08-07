@@ -20,13 +20,9 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="DataLake API",
         description=(
-            "API de consulta da plataforma "
-            "educacional de engenharia de "
-            "dados em saúde."
+            "API de consulta da plataforma educacional de engenharia de dados em saúde."
         ),
-        version=version(
-            "datalake-health-platform"
-        ),
+        version=version("datalake-health-platform"),
         docs_url="/docs",
         redoc_url="/redoc",
         openapi_url="/openapi.json",
@@ -34,29 +30,17 @@ def create_app() -> FastAPI:
 
     register_exception_handlers(app)
 
-    app.include_router(
-        health.router
-    )
+    app.include_router(health.router)
 
-    api_v1 = APIRouter(
-        prefix="/api/v1"
-    )
+    api_v1 = APIRouter(prefix="/api/v1")
 
-    api_v1.include_router(
-        patients.router
-    )
+    api_v1.include_router(patients.router)
 
-    api_v1.include_router(
-        source_files.router
-    )
+    api_v1.include_router(source_files.router)
 
-    api_v1.include_router(
-        ingestion_runs.router
-    )
+    api_v1.include_router(ingestion_runs.router)
 
-    api_v1.include_router(
-        staged_records.router
-    )
+    api_v1.include_router(staged_records.router)
 
     app.include_router(api_v1)
 

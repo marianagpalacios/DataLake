@@ -12,9 +12,7 @@ def test_patient_can_be_retrieved(
     api_client: TestClient,
     test_session_factory: sessionmaker[Session],
 ) -> None:
-    external_code = (
-        f"API-{uuid4().hex[:12].upper()}"
-    )
+    external_code = f"API-{uuid4().hex[:12].upper()}"
 
     with test_session_factory.begin() as session:
         patient = Patient(
@@ -27,9 +25,7 @@ def test_patient_can_be_retrieved(
 
         patient_id = patient.id
 
-    response = api_client.get(
-        f"/api/v1/patients/{patient_id}"
-    )
+    response = api_client.get(f"/api/v1/patients/{patient_id}")
 
     assert response.status_code == 200
 
@@ -44,24 +40,17 @@ def test_patient_can_be_retrieved(
 def test_missing_patient_returns_404(
     api_client: TestClient,
 ) -> None:
-    response = api_client.get(
-        "/api/v1/patients/999999999"
-    )
+    response = api_client.get("/api/v1/patients/999999999")
 
     assert response.status_code == 404
 
-    assert (
-        response.json()["error"]["code"]
-        == "resource_not_found"
-    )
+    assert response.json()["error"]["code"] == "resource_not_found"
 
 
 @pytest.mark.integration
 def test_patient_pagination_is_validated(
     api_client: TestClient,
 ) -> None:
-    response = api_client.get(
-        "/api/v1/patients?page=0"
-    )
+    response = api_client.get("/api/v1/patients?page=0")
 
     assert response.status_code == 422

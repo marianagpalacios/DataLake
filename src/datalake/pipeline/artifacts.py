@@ -31,13 +31,9 @@ def write_processed_patient_file(
             {
                 "external_code": record["external_code"],
                 "birth_date": (
-                    birth_date.isoformat()
-                    if birth_date is not None
-                    else ""
+                    birth_date.isoformat() if birth_date is not None else ""
                 ),
-                "biological_sex": (
-                    record.get("biological_sex") or ""
-                ),
+                "biological_sex": (record.get("biological_sex") or ""),
                 "source_row_number": validated.row_number,
             }
         )
@@ -48,9 +44,7 @@ def write_processed_patient_file(
             exist_ok=True,
         )
 
-        output_path = target_dir / (
-            f"{source_path.stem}_processed_{run_uuid}.csv"
-        )
+        output_path = target_dir / (f"{source_path.stem}_processed_{run_uuid}.csv")
 
         pd.DataFrame(rows).to_csv(
             output_path,

@@ -12,14 +12,10 @@ def read_csv_file(file_path: str | Path) -> pd.DataFrame:
     path = Path(file_path)
 
     if not path.exists():
-        raise CSVReadError(
-            f"Arquivo CSV não encontrado: {path}."
-        )
+        raise CSVReadError(f"Arquivo CSV não encontrado: {path}.")
 
     if not path.is_file():
-        raise CSVReadError(
-            f"O caminho informado não representa um arquivo: {path}."
-        )
+        raise CSVReadError(f"O caminho informado não representa um arquivo: {path}.")
 
     try:
         return pd.read_csv(
@@ -35,9 +31,7 @@ def read_csv_file(file_path: str | Path) -> pd.DataFrame:
             "O arquivo CSV está vazio ou não possui cabeçalho."
         ) from error
     except ParserError as error:
-        raise CSVReadError(
-            "O arquivo CSV está malformado."
-        ) from error
+        raise CSVReadError("O arquivo CSV está malformado.") from error
     except UnicodeDecodeError as error:
         raise CSVReadError(
             "O arquivo CSV não utiliza uma codificação UTF-8 válida."

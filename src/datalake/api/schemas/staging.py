@@ -11,7 +11,6 @@ from datalake.api.schemas.source_file import (
     SourceFileRead,
 )
 
-
 ValidationStatus = Literal[
     "valid",
     "rejected",
