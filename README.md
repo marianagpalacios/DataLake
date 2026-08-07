@@ -10,7 +10,7 @@ Plataforma educacional de engenharia de dados em saúde desenvolvida com Python,
 
 O projeto simula um fluxo profissional de ingestão de pacientes sintéticos, incluindo preservação da origem, identificação de arquivos por SHA-256, validação de qualidade, sucesso parcial, staging, rastreabilidade, persistência, API REST, testes isolados e integração contínua.
 
-O DataLake foi desenvolvido como portfólio técnico voltado ao Projeto SABIÁ da UTFPR e à preparação para atuação em engenharia de dados em saúde.
+O DataLake é um projeto pessoal de portfólio criado para desenvolver e demonstrar competências em engenharia de dados aplicada à saúde.
 
 ## Problema resolvido
 
