@@ -1,0 +1,47 @@
+name: Sugerir uma melhoria
+
+description: Proponha uma evolução para o DataLake.
+
+title: "[MELHORIA] "
+
+labels:
+  - enhancement
+
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema
+      description: Qual problema a melhoria resolveria?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposta
+      description: Como a solução poderia funcionar?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options:
+        - Pipeline ETL
+        - Banco de dados
+        - Qualidade de dados
+        - API
+        - Testes
+        - Docker
+        - Documentação
+        - Segurança
+        - Outro
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas consideradas
