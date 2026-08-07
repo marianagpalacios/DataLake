@@ -3,8 +3,8 @@ from uuid import uuid4
 
 import pytest
 from sqlalchemy import delete, func, select
+from sqlalchemy.orm import Session, sessionmaker
 
-from datalake.database.session import SessionFactory
 from datalake.models.data_quality_issue_record import (
     DataQualityIssueRecord,
 )
@@ -22,8 +22,12 @@ def _test_identity() -> tuple[str, str]:
     return f"etl-test-{suffix}", f"ETL-{suffix}"
 
 
-def _cleanup(source_name: str, code_prefix: str) -> None:
-    with SessionFactory.begin() as session:
+def _cleanup(
+    session_factory: sessionmaker[Session],
+    source_name: str,
+    code_prefix: str,
+) -> None:
+    with session_factory.begin() as session:
         source = session.scalar(
             select(DataSource).where(
                 DataSource.name == source_name
@@ -52,6 +56,7 @@ def _cleanup(source_name: str, code_prefix: str) -> None:
 @pytest.mark.integration
 def test_patient_etl_persists_complete_lineage(
     tmp_path: Path,
+    test_session_factory: sessionmaker[Session],
 ) -> None:
     source_name, code_prefix = _test_identity()
     file_path = tmp_path / "patients.csv"
@@ -70,6 +75,7 @@ def test_patient_etl_persists_complete_lineage(
             raw_dir=tmp_path / "raw",
             processed_dir=tmp_path / "processed",
             rejected_dir=tmp_path / "rejected",
+            session_factory=test_session_factory,
         )
 
         assert result.status == "completed_with_rejections"
@@ -78,7 +84,7 @@ def test_patient_etl_persists_complete_lineage(
         assert result.rejection_file is not None
         assert result.rejection_file.is_file()
 
-        with SessionFactory() as session:
+        with test_session_factory() as session:
             run = session.scalar(
                 select(IngestionRun).where(
                     IngestionRun.run_uuid == result.run_uuid
@@ -121,12 +127,17 @@ def test_patient_etl_persists_complete_lineage(
         assert patient_count == 1
 
     finally:
-        _cleanup(source_name, code_prefix)
+        _cleanup(
+            test_session_factory,
+            source_name,
+            code_prefix,
+        )
 
 
 @pytest.mark.integration
 def test_patient_etl_skips_duplicate_file(
     tmp_path: Path,
+    test_session_factory: sessionmaker[Session],
 ) -> None:
     source_name, code_prefix = _test_identity()
     file_path = tmp_path / "patients.csv"
@@ -144,6 +155,7 @@ def test_patient_etl_skips_duplicate_file(
             raw_dir=tmp_path / "raw",
             processed_dir=tmp_path / "processed",
             rejected_dir=tmp_path / "rejected",
+            session_factory=test_session_factory,
         )
         second = run_patient_etl(
             file_path,
@@ -151,13 +163,14 @@ def test_patient_etl_skips_duplicate_file(
             raw_dir=tmp_path / "raw",
             processed_dir=tmp_path / "processed",
             rejected_dir=tmp_path / "rejected",
+            session_factory=test_session_factory,
         )
 
         assert first.status == "completed"
         assert second.status == "skipped_duplicate"
         assert second.duplicate_of_run_uuid == first.run_uuid
 
-        with SessionFactory() as session:
+        with test_session_factory() as session:
             runs = list(
                 session.scalars(
                     select(IngestionRun)
@@ -184,12 +197,17 @@ def test_patient_etl_skips_duplicate_file(
         assert staged_counts == [2, 0]
 
     finally:
-        _cleanup(source_name, code_prefix)
+        _cleanup(
+            test_session_factory,
+            source_name,
+            code_prefix,
+        )
 
 
 @pytest.mark.integration
 def test_patient_etl_force_reprocesses_file(
     tmp_path: Path,
+    test_session_factory: sessionmaker[Session],
 ) -> None:
     source_name, code_prefix = _test_identity()
     file_path = tmp_path / "patients.csv"
@@ -207,6 +225,7 @@ def test_patient_etl_force_reprocesses_file(
             raw_dir=tmp_path / "raw",
             processed_dir=tmp_path / "processed",
             rejected_dir=tmp_path / "rejected",
+            session_factory=test_session_factory,
         )
         forced = run_patient_etl(
             file_path,
@@ -215,6 +234,7 @@ def test_patient_etl_force_reprocesses_file(
             processed_dir=tmp_path / "processed",
             rejected_dir=tmp_path / "rejected",
             force=True,
+            session_factory=test_session_factory,
         )
 
         assert first.status == "completed"
@@ -223,7 +243,7 @@ def test_patient_etl_force_reprocesses_file(
         assert forced.inserted_count == 0
         assert forced.existing_count == 2
 
-        with SessionFactory() as session:
+        with test_session_factory() as session:
             staged_count = session.scalar(
                 select(func.count())
                 .select_from(StagedPatientRecord)
@@ -246,12 +266,17 @@ def test_patient_etl_force_reprocesses_file(
         assert patient_count == 2
 
     finally:
-        _cleanup(source_name, code_prefix)
+        _cleanup(
+            test_session_factory,
+            source_name,
+            code_prefix,
+        )
 
 
 @pytest.mark.integration
 def test_patient_etl_marks_structural_failure(
     tmp_path: Path,
+    test_session_factory: sessionmaker[Session],
 ) -> None:
     source_name, code_prefix = _test_identity()
     file_path = tmp_path / "patients.csv"
@@ -269,9 +294,10 @@ def test_patient_etl_marks_structural_failure(
                 raw_dir=tmp_path / "raw",
                 processed_dir=tmp_path / "processed",
                 rejected_dir=tmp_path / "rejected",
+                session_factory=test_session_factory,
             )
 
-        with SessionFactory() as session:
+        with test_session_factory() as session:
             run = session.scalar(
                 select(IngestionRun)
                 .join(SourceFile)
@@ -304,4 +330,8 @@ def test_patient_etl_marks_structural_failure(
         assert patient_count == 0
 
     finally:
-        _cleanup(source_name, code_prefix)
+        _cleanup(
+            test_session_factory,
+            source_name,
+            code_prefix,
+        )

@@ -3,8 +3,8 @@ from uuid import uuid4
 
 import pytest
 from sqlalchemy import delete, select
+from sqlalchemy.orm import Session, sessionmaker
 
-from datalake.database.session import SessionFactory
 from datalake.ingestion.services import ingest_patients_csv
 from datalake.models.patient import Patient
 
@@ -12,6 +12,7 @@ from datalake.models.patient import Patient
 @pytest.mark.integration
 def test_patient_ingestion_is_idempotent(
     tmp_path: Path,
+    test_session_factory: sessionmaker[Session],
 ) -> None:
     unique_suffix = uuid4().hex[:8].upper()
 
@@ -30,8 +31,14 @@ def test_patient_ingestion_is_idempotent(
     )
 
     try:
-        first_result = ingest_patients_csv(file_path)
-        second_result = ingest_patients_csv(file_path)
+        first_result = ingest_patients_csv(
+            file_path,
+            session_factory=test_session_factory,
+        )
+        second_result = ingest_patients_csv(
+            file_path,
+            session_factory=test_session_factory,
+        )
 
         assert first_result.received_count == 2
         assert first_result.valid_count == 2
@@ -43,7 +50,7 @@ def test_patient_ingestion_is_idempotent(
         assert second_result.inserted_count == 0
         assert second_result.existing_count == 2
 
-        with SessionFactory() as session:
+        with test_session_factory() as session:
             statement = select(Patient).where(
                 Patient.external_code.in_(codes)
             )
@@ -55,7 +62,7 @@ def test_patient_ingestion_is_idempotent(
         assert len(stored_patients) == 2
 
     finally:
-        with SessionFactory.begin() as session:
+        with test_session_factory.begin() as session:
             session.execute(
                 delete(Patient).where(
                     Patient.external_code.in_(codes)
@@ -66,6 +73,7 @@ def test_patient_ingestion_is_idempotent(
 @pytest.mark.integration
 def test_patient_ingestion_inserts_only_valid_records(
     tmp_path: Path,
+    test_session_factory: sessionmaker[Session],
 ) -> None:
     unique_suffix = uuid4().hex[:8].upper()
     codes = [
@@ -88,6 +96,7 @@ def test_patient_ingestion_inserts_only_valid_records(
         result = ingest_patients_csv(
             file_path,
             rejection_output_dir=rejection_dir,
+            session_factory=test_session_factory,
         )
 
         assert result.received_count == 3
@@ -98,7 +107,7 @@ def test_patient_ingestion_inserts_only_valid_records(
         assert result.rejection_file.is_file()
         assert result.rejection_file.parent == rejection_dir.resolve()
 
-        with SessionFactory() as session:
+        with test_session_factory() as session:
             statement = select(Patient).where(
                 Patient.external_code.in_(codes)
             )
@@ -111,7 +120,7 @@ def test_patient_ingestion_inserts_only_valid_records(
         } == {codes[0]}
 
     finally:
-        with SessionFactory.begin() as session:
+        with test_session_factory.begin() as session:
             session.execute(
                 delete(Patient).where(
                     Patient.external_code.in_(codes)
