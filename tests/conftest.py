@@ -16,7 +16,7 @@ from alembic import command
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
-class TestDatabaseSettings(BaseSettings):
+class DatabaseTestSettings(BaseSettings):
     """Configurações exclusivas do banco de testes."""
 
     model_config = SettingsConfigDict(
@@ -46,8 +46,8 @@ class TestDatabaseSettings(BaseSettings):
 
 
 @pytest.fixture(scope="session")
-def test_database_settings() -> TestDatabaseSettings:
-    settings = TestDatabaseSettings()
+def test_database_settings() -> DatabaseTestSettings:
+    settings = DatabaseTestSettings()
 
     database_name = settings.postgres_db.lower()
 
@@ -62,7 +62,7 @@ def test_database_settings() -> TestDatabaseSettings:
 
 @pytest.fixture(scope="session")
 def test_engine(
-    test_database_settings: TestDatabaseSettings,
+    test_database_settings: DatabaseTestSettings,
 ) -> Iterator[Engine]:
     engine = create_engine(
         test_database_settings.database_url,

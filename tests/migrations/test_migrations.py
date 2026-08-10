@@ -12,7 +12,7 @@ from sqlalchemy import (
 
 from alembic import command
 from tests.conftest import (
-    TestDatabaseSettings,
+    DatabaseTestSettings,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -21,7 +21,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 @pytest.mark.migration
 @pytest.mark.integration
 def test_migrations_upgrade_downgrade_and_upgrade(
-    test_database_settings: TestDatabaseSettings,
+    test_database_settings: DatabaseTestSettings,
 ) -> None:
     database_name = f"datalake_migration_{uuid4().hex[:12]}"
 
