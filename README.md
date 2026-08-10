@@ -202,11 +202,12 @@ Os relatórios locais são gravados em `data/rejected`, e os problemas persistid
 
 A API é somente leitura e publica contratos tipados, validação de parâmetros, paginação, filtros e respostas de erro padronizadas.
 
-Documentação interativa:
+### Swagger UI
 
-A API disponibiliza documentação interativa por meio do Swagger UI.
+A API possui documentação interativa gerada automaticamente pelo FastAPI.
 
-- ![Swagger UI da API DataLake v1.0.0](docs/images/swagger-ui.png)
+![Swagger UI do DataLake](docs/images/swagger-ui.png)
+
 - [ReDoc](http://localhost:8000/redoc);
 - [OpenAPI](http://localhost:8000/openapi.json).
 

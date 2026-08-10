@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "datalake-health-platform"
-version = "1.0.0"
+version = "1.0.1"
 description = "Plataforma educacional de engenharia de dados em saúde."
 readme = "README.md"
 requires-python = ">=3.12"

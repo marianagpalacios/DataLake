@@ -13,6 +13,19 @@ Todas as alterações relevantes do DataLake são registradas neste arquivo.
 - observabilidade;
 - processamento assíncrono.
 
+## [1.0.1] — 2026
+
+### Corrigido
+
+- atualização de `actions/upload-artifact` para a versão 7;
+- remoção do aviso de coleta da classe auxiliar de configuração do Pytest;
+- atualização da evidência visual da Swagger UI.
+
+### Observação
+
+Esta versão é exclusivamente de manutenção e não altera o contrato
+funcional da aplicação.
+
 ## [1.0.0] — 2026
 
 ### Marco
