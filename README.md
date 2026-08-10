@@ -204,7 +204,9 @@ A API é somente leitura e publica contratos tipados, validação de parâmetros
 
 Documentação interativa:
 
-- [Swagger UI](http://localhost:8000/docs);
+A API disponibiliza documentação interativa por meio do Swagger UI.
+
+- ![Swagger UI da API DataLake v1.0.0](docs/images/swagger-ui.png)
 - [ReDoc](http://localhost:8000/redoc);
 - [OpenAPI](http://localhost:8000/openapi.json).
 
