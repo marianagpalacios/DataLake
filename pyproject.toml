@@ -9,9 +9,6 @@ description = "Plataforma educacional de engenharia de dados em saúde."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12"
-classifiers = [
-    "License :: OSI Approved :: MIT License",
-]
 dependencies = [
     "alembic>=1.16,<2.0",
     "fastapi[standard]>=0.116,<1.0",
