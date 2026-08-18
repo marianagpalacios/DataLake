@@ -4,6 +4,10 @@ Todas as alterações relevantes do DataLake são registradas neste arquivo.
 
 ## [Não publicado]
 
+### Adicionado
+
+- licença MIT e sua identificação na documentação e nos metadados do pacote.
+
 ### Planejado
 
 - autenticação e autorização;

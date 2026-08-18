@@ -5,6 +5,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-336791)
 ![FastAPI](https://img.shields.io/badge/FastAPI-REST_API-009688)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Plataforma educacional de engenharia de dados em saúde desenvolvida com Python, PostgreSQL, Docker, Pandas, SQLAlchemy, Alembic e FastAPI.
 
@@ -366,6 +367,7 @@ DataLake/
 - [Changelog](CHANGELOG.md)
 - [Contribuição](CONTRIBUTING.md)
 - [Segurança](SECURITY.md)
+- [Licença](LICENSE)
 
 ## Limitações atuais
 
@@ -396,4 +398,6 @@ Desenvolvido por [Mariana Gasparotto Palácios](https://github.com/marianagpalac
 
 ## Licença
 
-Este repositório ainda não possui um arquivo de licença. Até que uma licença seja definida, o código permanece protegido pelos direitos autorais da autora e não deve ser considerado software de domínio público ou de uso irrestrito.
+Este projeto é distribuído sob a licença MIT. Consulte o arquivo
+[LICENSE](LICENSE) para conhecer os termos de uso, cópia, modificação e
+distribuição.
